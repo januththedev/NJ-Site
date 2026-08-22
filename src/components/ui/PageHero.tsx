@@ -17,7 +17,7 @@ export default function PageHero({ eyebrow, title, subtitle, model = 'book' }: P
           <h1 className="font-display text-balance text-4xl font-bold leading-tight text-white sm:text-5xl">{title}</h1>
           {subtitle && <p className="mt-4 max-w-xl leading-relaxed text-slate-400">{subtitle}</p>}
         </div>
-        <MiniModel model={model} className="hidden h-[240px] lg:block" cameraPosition={[0, 0.2, 4.2]} />
+        <MiniModel model={model} className="hidden lg:block" stageHeight="240px" cameraPosition={[0, 0.2, 4.2]} />
       </div>
       <div className="hairline mt-12" />
     </section>

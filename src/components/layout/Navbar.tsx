@@ -59,7 +59,7 @@ export default function Navbar() {
             {/* Student Login — extreme right edge, only at the very top of the page */}
             <NavLink
               to="/student-login"
-              className={`btn-primary !px-5 !py-2 text-xs transition-all duration-500 ${
+              className={`btn-primary !px-5 !py-2 text-xs transition-all duration-500 hidden sm:inline-flex ${
                 atTop ? 'opacity-100 translate-x-0' : 'pointer-events-none opacity-0 translate-x-4'
               }`}
             >

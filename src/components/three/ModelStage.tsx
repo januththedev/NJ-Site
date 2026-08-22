@@ -4,6 +4,8 @@ import { Canvas } from '@react-three/fiber'
 interface Props {
   children: React.ReactNode
   className?: string
+  /** Explicit height (e.g. "440px"); defaults to filling the parent. */
+  height?: string
   cameraPosition?: [number, number, number]
   fov?: number
   ariaLabel?: string
@@ -13,7 +15,7 @@ interface Props {
  * Shared R3F stage: clamped DPR, Suspense boundary, and a frameloop that
  * pauses entirely when the canvas scrolls out of view.
  */
-export default function ModelStage({ children, className = '', cameraPosition = [0, 1.2, 6], fov = 42, ariaLabel }: Props) {
+export default function ModelStage({ children, className = '', height, cameraPosition = [0, 1.2, 6], fov = 42, ariaLabel }: Props) {
   const holder = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -28,7 +30,8 @@ export default function ModelStage({ children, className = '', cameraPosition = 
   return (
     <div
       ref={holder}
-      className={`h-full w-full ${className}`}
+      className={`relative w-full overflow-hidden ${className}`}
+      style={{ height: height ?? '100%' }}
       role="img"
       aria-label={ariaLabel}
     >

@@ -5,32 +5,43 @@ import * as THREE from 'three'
 import { gsap } from '../../hooks/useGsapContext'
 
 /**
- * Exam paper that gets graded with a red pen: the pen sweeps across the
- * sheet and red check ticks pop in one by one every time `trigger`
- * increments (scroll-past or hover).
+ * Exam paper that gets graded by a red pen:
+ * - the pen travels between answers in small lifting arcs
+ * - each ✓ stroke is DRAWN progressively (grows from its anchor)
+ * - a circled "A" pops in after the last tick
+ * Replays every time `trigger` increments (scroll-past or hover).
  */
 export default function ExamPaper({ trigger = 0 }: { trigger?: number }) {
   const { scene } = useGLTF('/models/exam-paper.glb')
-  const ticks = useRef<THREE.Group[]>([])
+  const strokes = useRef<THREE.Group[]>([])
+  const ring = useRef<THREE.Group | null>(null)
+  const gradeA = useRef<THREE.Object3D | null>(null)
   const pen = useRef<THREE.Group | null>(null)
   const tlRef = useRef<gsap.core.Timeline | null>(null)
   const group = useRef<THREE.Group>(null)
 
   useMemo(() => {
-    ticks.current = []
+    strokes.current = []
     scene.traverse((o) => {
-      if (/^Tick\d$/.test(o.name)) {
-        ticks.current.push(o as THREE.Group)
-        ;(o as THREE.Group).children.forEach((child) => {
-          const m = (child as THREE.Mesh).material as THREE.MeshStandardMaterial
-          m.opacity = 0
-          m.transparent = true
-        })
-        ;(o as THREE.Group).scale.setScalar(0.3)
+      if (/^Tick\d+_[ab]$/.test(o.name)) {
+        const g = o as THREE.Group
+        const mesh = g.children[0] as THREE.Mesh
+        // GLTFLoader yields plain BufferGeometry (no .parameters) — measure it
+        const geo = mesh.geometry as THREE.BufferGeometry
+        if (!geo.boundingBox) geo.computeBoundingBox()
+        g.userData.len = geo.boundingBox!.max.x - geo.boundingBox!.min.x
+        g.scale.x = 0.001
+        strokes.current.push(g)
+      }
+      if (o.name === 'GradeRing' || o.name === 'GradeA') {
+        ;(o as THREE.Mesh).scale.setScalar(0.001)
+        if (o.name === 'GradeRing') ring.current = o as THREE.Group
+        else gradeA.current = o
       }
       if (o.name === 'Pen') pen.current = o as THREE.Group
     })
-    ticks.current.sort((a, b) => a.name.localeCompare(b.name))
+    // document order: Tick1_a, Tick1_b, Tick2_a …
+    strokes.current.sort((a, b) => a.name.localeCompare(b.name))
     return scene
   }, [scene])
 
@@ -38,35 +49,57 @@ export default function ExamPaper({ trigger = 0 }: { trigger?: number }) {
     if (!trigger || !pen.current) return
     tlRef.current?.kill()
 
-    // reset ticks before replay
-    ticks.current.forEach((tick) => {
-      ;(tick as THREE.Group).children.forEach((child) => {
-        const m = (child as THREE.Mesh).material as THREE.MeshStandardMaterial
-        gsap.set(m, { opacity: 0 })
-      })
-      gsap.set(tick.scale, { x: 0.3, y: 0.3, z: 0.3 })
-    })
+    const reset = () => {
+      strokes.current.forEach((s) => gsap.set(s.scale, { x: 0.001 }))
+      if (ring.current) gsap.set(ring.current.scale, { x: 0.001, y: 0.001, z: 0.001 })
+      if (gradeA.current) gsap.set(gradeA.current.scale, { x: 0.001, y: 0.001, z: 0.001 })
+    }
+    reset()
 
     const ctx = gsap.context(() => {
-      // park pen at the start of the first tick row
-      gsap.set(pen.current!.position, { x: -0.9, y: -1.35, z: 0.5 })
-      gsap.set(pen.current!.rotation, { z: 0.5 })
-      const tl = gsap.timeline({ onComplete: () => pen.current && gsap.to(pen.current.position, { x: -0.25, y: -1.18, duration: 0.7 }) })
-      ticks.current.forEach((tick, i) => {
-        tl.to(pen.current!.position, {
-          x: tick.position.x - 0.22,
-          y: tick.position.y - 0.12,
-          z: 0.42,
-          duration: 0.38,
-          ease: 'power2.inOut',
-        }, i * 0.55)
-        tl.to(tick.children.map((c) => (c as THREE.Mesh).material as THREE.MeshStandardMaterial), {
-          opacity: 1,
-          duration: 0.18,
-        }, i * 0.55 + 0.3)
-        tl.fromTo(tick.scale, { x: 0.3, y: 0.3, z: 0.3 }, { x: 1, y: 1, z: 1, duration: 0.28, ease: 'back.out(2.4)' }, i * 0.55 + 0.3)
-        tl.to(pen.current!.rotation, { z: 0.5 - (i % 2) * 0.16, duration: 0.2 }, i * 0.55)
+      const penObj = pen.current!
+      const REST = { x: -1.05, y: -1.32, z: 0.34 }
+      gsap.set(penObj.position, REST)
+      gsap.set(penObj.rotation, { z: 0.42 })
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          // return the pen to its resting pose on the desk
+          gsap.to(penObj.position, { x: -0.25, y: -1.16, z: 0.14, duration: 0.6, ease: 'power2.inOut' })
+          gsap.to(penObj.rotation, { z: 0.22, duration: 0.6 })
+        },
       })
+
+      const pairs: Record<string, THREE.Group[]> = {}
+      strokes.current.forEach((s) => {
+        const tick = s.name.split('_')[0]
+        ;(pairs[tick] ??= []).push(s)
+      })
+
+      Object.keys(pairs).sort().forEach((tickName, idx) => {
+        const [a, b] = pairs[tickName]
+        const target = a.position // both strokes share the tick's row area
+        const liftY = 0.34 + Math.random() * 0.08
+
+        // arc toward the stroke start (lift, glide, drop to the paper)
+        tl.to(penObj.position, { x: target.x - 0.14, y: target.y + liftY, z: 0.4, duration: 0.26, ease: 'power1.out' }, idx * 0.62)
+        tl.to(penObj.position, { x: a.position.x - (a.userData.len as number) / 2 + 0.02, y: a.position.y - 0.02, z: 0.075, duration: 0.16, ease: 'power2.in' }, idx * 0.62 + 0.26)
+
+        // draw stroke A under the nib…
+        tl.to(a.scale, { x: 1, duration: 0.16, ease: 'none' }, idx * 0.62 + 0.44)
+        // …slide the nib across to stroke B's start while A finishes
+        tl.to(penObj.position, { x: b.position.x, y: b.position.y, z: 0.075, duration: 0.14, ease: 'none' }, idx * 0.62 + 0.46)
+        tl.to(b.scale, { x: 1, duration: 0.22, ease: 'none' }, idx * 0.62 + 0.6)
+        // flick off the paper toward the next answer
+        tl.to(penObj.position, { z: 0.28, duration: 0.12, ease: 'power2.out' }, idx * 0.62 + 0.8)
+        tl.to(penObj.rotation, { z: 0.42 + Math.sin(idx) * 0.12, duration: 0.3 }, idx * 0.62 + 0.5)
+      })
+
+      // circled grade after the final tick
+      const last = 4 * 0.62
+      tl.to(ring.current!.scale, { x: 1, y: 1, z: 1, duration: 0.4, ease: 'back.out(2.2)' }, last + 0.15)
+      tl.to(gradeA.current!.scale, { x: 1, y: 1, z: 1, duration: 0.3, ease: 'back.out(2.6)' }, last + 0.3)
+
       tlRef.current = tl
     })
     return () => ctx.revert()

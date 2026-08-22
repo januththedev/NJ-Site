@@ -309,129 +309,212 @@ await exportGlb(prismWrap, join(outDir, 'prism.glb'))
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Concept 3 — Open physics book with flippable pages (Theory & Revision card)
+// Pages are segmented planes so the runtime can curl/bend them while flipping.
 function buildOpenBook() {
   const book = new THREE.Group()
   book.name = 'OpenBook'
 
-  const coverMat = mat({ color: '#274b8f', roughness: 0.55 })
-  const pageMat = mat({ color: '#f2ecdd', roughness: 0.9 })
-  const lineMat = mat({ color: '#3a4356', roughness: 0.8 })
+  const PW = 0.98 // page width
+  const PH = 1.38 // page height
 
-  // back cover boards angled open around the spine (Y axis at x=0)
+  const coverMat = mat({ color: '#1e3d78', roughness: 0.45, metalness: 0.08 })
+  const linerMat = mat({ color: '#33415c', roughness: 0.8 })
+  const spineMat = mat({ color: '#152e5e', roughness: 0.5 })
+  const pageMat = new THREE.MeshStandardMaterial({ color: '#f6f0df', roughness: 0.88, side: THREE.DoubleSide })
+
+  // ── cover boards (slight overhang beyond the pages, opened flat) ──
   for (const side of [-1, 1]) {
-    const cover = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.45, 0.06), coverMat)
     const pivot = new THREE.Group()
-    pivot.rotation.y = side * 0.42
-    cover.position.x = (side * 1.05) / 2
-    pivot.add(cover)
+    pivot.rotation.y = side * 0.44
+    const board = new THREE.Mesh(new THREE.BoxGeometry(PW + 0.06, PH + 0.08, 0.05), coverMat)
+    board.position.x = (side * (PW + 0.06)) / 2
+    const liner = new THREE.Mesh(new THREE.BoxGeometry(PW - 0.02, PH - 0.04, 0.012), linerMat)
+    liner.position.set((side * (PW - 0.02)) / 2, 0, side > 0 ? -0.03 : 0.03)
+    pivot.add(board, liner)
     pivot.name = side < 0 ? 'CoverLeft' : 'CoverRight'
     book.add(pivot)
   }
 
-  // static page stacks on both sides
-  for (const side of [-1, 1]) {
-    for (let i = 0; i < 5; i++) {
-      const page = new THREE.Mesh(new THREE.BoxGeometry(0.98, 1.36, 0.018), pageMat)
-      const pivot = new THREE.Group()
-      pivot.rotation.y = side * (0.36 - i * 0.02)
-      page.position.set((side * 0.98) / 2, 0, 0.004 * i + side * 0.002)
-      page.position.z = 0.05 + i * 0.02
-      pivot.add(page)
-      book.add(pivot)
-    }
+  // ── spine: half-cylinder + head/tail bands ──
+  const spineCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, PH + 0.08, 16, 1, false, Math.PI / 2, Math.PI), spineMat)
+  spineCyl.rotation.y = Math.PI / 2
+  spineCyl.scale.z = 1.4
+  book.add(spineCyl)
+  for (const yy of [PH / 2 + 0.06, -PH / 2 - 0.06]) {
+    const band = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.05, 0.24), mat({ color: '#c9a24b', metalness: 0.75, roughness: 0.35 }))
+    band.position.y = yy
+    book.add(band)
   }
 
-  // text lines on the top-right static page
-  for (let r = 0; r < 7; r++) {
-    const line = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.012, 0.03), lineMat)
-    line.position.set(0.52, 0.52 - r * 0.16, 0.155)
-    line.name = `TextLine${r}`
+  // ── static page stacks: thick right block, thinner used left block ──
+  const mkStackPage = (side, i, total) => {
+    const g = new THREE.Group()
+    g.rotation.y = side * (0.36 - i * 0.018)
+    const page = new THREE.Mesh(new THREE.BoxGeometry(PW - 0.01, PH - 0.02, 0.016), pageMat)
+    page.position.set((side * (PW - 0.01)) / 2, 0, 0.09 + i * 0.02)
+    g.add(page)
+    return g
+  }
+  for (let i = 0; i < 7; i++) book.add(mkStackPage(1, i, 7)) // right: unflipped
+  for (let i = 0; i < 3; i++) book.add(mkStackPage(-1, i, 3)) // left: already read
+
+  // ── print on the visible right page: heading rule, text lines, diagram ──
+  const inkMat = mat({ color: '#39435a', roughness: 0.85 })
+  const topZ = 0.09 + 7 * 0.02 + 0.008
+  const header = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.05, 0.006), mat({ color: '#22325c' }))
+  header.position.set(0.5, 0.56, topZ)
+  book.add(header)
+  for (let r = 0; r < 6; r++) {
+    const line = new THREE.Mesh(new THREE.BoxGeometry(0.72 - (r % 2) * 0.12, 0.014, 0.005), inkMat)
+    line.position.set(0.48, 0.42 - r * 0.15, topZ)
     book.add(line)
   }
-  // a small "diagram" square (physics-y)
-  const diagram = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.014, 8, 24), mat({ color: '#38e8ff', emissive: '#38e8ff', emissiveIntensity: 0.6 }))
-  diagram.position.set(0.55, -0.32, 0.16)
+  const diagram = new THREE.Mesh(
+    new THREE.TorusGeometry(0.1, 0.013, 8, 26),
+    mat({ color: '#38e8ff', emissive: '#38e8ff', emissiveIntensity: 0.55 })
+  )
+  diagram.position.set(0.52, -0.34, topZ)
+  diagram.name = 'Diagram'
   book.add(diagram)
+  // faint mirrored lines on the left (already-read) page
+  for (let r = 0; r < 5; r++) {
+    const line = new THREE.Mesh(new THREE.BoxGeometry(0.68 - (r % 3) * 0.1, 0.012, 0.005), mat({ color: '#5b6478' }))
+    line.position.set(-0.48, 0.42 - r * 0.17, 0.09 + 3 * 0.02 + 0.008)
+    book.add(line)
+  }
 
-  // flipping pages — pivoted at the spine, rotated by runtime
+  // ── flippable pages: segmented planes (curl-bent at runtime) ──
   for (let i = 0; i < 4; i++) {
-    const page = new THREE.Mesh(new THREE.BoxGeometry(0.96, 1.34, 0.016), pageMat)
-    page.position.x = 0.48
+    const geo = new THREE.PlaneGeometry(PW - 0.02, PH - 0.03, 14, 1)
+    const page = new THREE.Mesh(geo, pageMat)
+    page.position.x = (PW - 0.02) / 2 // hinge at spine edge
     const pivot = new THREE.Group()
     pivot.add(page)
-    pivot.position.z = 0.16 + i * 0.022
-    pivot.rotation.y = 0.35
+    pivot.position.z = 0.235 + i * 0.018
+    pivot.rotation.y = 0.37
     pivot.name = `FlipPage${i}`
     book.add(pivot)
   }
 
-  // spine
-  const spine = new THREE.Mesh(new THREE.BoxGeometry(0.09, 1.5, 0.1), mat({ color: '#1b356b', roughness: 0.6 }))
-  spine.position.z = 0.08
-  book.add(spine)
+  // ── ribbon bookmark draped over the right stack ──
+  const ribbon = new THREE.Mesh(new THREE.BoxGeometry(0.09, PH * 0.86, 0.008), mat({ color: '#b8323c', roughness: 0.7 }))
+  ribbon.position.set(0.62, -0.02, 0.245 + 4 * 0.018 + 0.012)
+  ribbon.rotation.z = 0.06
+  ribbon.name = 'Ribbon'
+  book.add(ribbon)
 
   return book
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Concept 4 — Exam paper with red-pen grading marks (Papers card)
+// Concept 4 — Exam paper with red-pen grading (Papers card)
+// Ticks are anchor-grouped so the runtime can "draw" each stroke progressively.
 function buildExamPaper() {
   const paper = new THREE.Group()
   paper.name = 'ExamPaper'
 
-  const sheet = new THREE.Mesh(
-    new THREE.BoxGeometry(1.5, 2.0, 0.03),
-    mat({ color: '#f5f1e6', roughness: 0.85 })
-  )
-  sheet.rotation.x = -0.08
+  // ── sheet: segmented plane with a gentle baked curl (paper never lies flat) ──
+  const SW = 1.5
+  const SH = 2.0
+  const geo = new THREE.PlaneGeometry(SW, SH, 12, 16)
+  const pos = geo.getAttribute('position')
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i)
+    const y = pos.getY(i)
+    const nx = x / (SW / 2)
+    const ny = y / (SH / 2)
+    // soft cylindrical wave + lifted corners
+    pos.setZ(i, Math.sin(nx * 1.9) * 0.022 + Math.cos(ny * 2.3) * 0.014 + (Math.abs(nx) * Math.abs(ny)) ** 2 * 0.05)
+  }
+  geo.computeVertexNormals()
+  const sheetMat = new THREE.MeshStandardMaterial({ color: '#f7f3e8', roughness: 0.92, side: THREE.DoubleSide })
+  const sheet = new THREE.Mesh(geo, sheetMat)
+  sheet.name = 'Sheet'
+  sheet.rotation.x = -0.07
   paper.add(sheet)
 
-  const lineMat = mat({ color: '#495064', roughness: 0.8 })
-  for (let r = 0; r < 9; r++) {
-    const w = r % 3 === 2 ? 0.9 : 1.18
-    const line = new THREE.Mesh(new THREE.BoxGeometry(w, 0.018, 0.028), lineMat)
-    line.position.set(-0.04, 0.78 - r * 0.185, 0.022)
-    line.rotation.x = -0.08
+  const sz = 0.035 // print height above the sheet surface
+
+  // ── letterhead: institute bar + gold rule ──
+  const headerBar = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.11, 0.006), mat({ color: '#22325c' }))
+  headerBar.position.set(-0.22, 0.82, sz)
+  paper.add(headerBar)
+  const goldRule = new THREE.Mesh(new THREE.BoxGeometry(1.24, 0.02, 0.005), mat({ color: '#c9a24b', metalness: 0.7, roughness: 0.35 }))
+  goldRule.position.set(0, 0.73, sz)
+  paper.add(goldRule)
+
+  // ── ruled answer lines ──
+  const lineMat = mat({ color: '#495064', roughness: 0.85 })
+  for (let r = 0; r < 8; r++) {
+    const w = r % 3 === 2 ? 0.86 : 1.18
+    const line = new THREE.Mesh(new THREE.BoxGeometry(w, 0.016, 0.006), lineMat)
+    line.position.set(-0.04, 0.58 - r * 0.185, sz)
+    line.rotation.x = -0.02
     paper.add(line)
   }
-  // red margin line
-  const margin = new THREE.Mesh(new THREE.BoxGeometry(0.015, 1.85, 0.026), mat({ color: '#e05252' }))
-  margin.position.set(-0.58, 0, 0.023)
-  margin.rotation.x = -0.08
+  const margin = new THREE.Mesh(new THREE.BoxGeometry(0.014, 1.8, 0.006), mat({ color: '#d96a6a' }))
+  margin.position.set(-0.6, -0.08, sz)
   paper.add(margin)
 
-  // red check ticks (hidden until graded) — two strokes forming ✓
-  const tickMat = () =>
-    new THREE.MeshStandardMaterial({ color: '#d92b2b', emissive: '#a11212', emissiveIntensity: 0.35, roughness: 0.5, transparent: true, opacity: 0 })
+  // ── red ticks: two anchored strokes per tick, grown at runtime ──
+  const mkStroke = (len, rotZ, ax, ay) => {
+    const anchor = new THREE.Group()
+    anchor.position.set(ax, ay, sz + 0.012)
+    anchor.rotation.z = rotZ
+    const g = new THREE.BoxGeometry(len, 0.03, 0.014)
+    g.translate(len / 2, 0, 0) // grows from the anchor along local +X
+    const stroke = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: '#c81e1e', emissive: '#7e1010', emissiveIntensity: 0.35, roughness: 0.45 }))
+    anchor.add(stroke)
+    return anchor
+  }
   for (let t = 0; t < 4; t++) {
-    const g = new THREE.Group()
-    const s1 = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.028, 0.02), tickMat())
-    s1.rotation.z = 0.7
-    s1.position.x = -0.03
-    const s2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.028, 0.02), tickMat())
-    s2.rotation.z = -0.5
-    s2.position.x = 0.07
-    g.add(s1, s2)
-    g.position.set(0.48, 0.72 - t * 0.46, 0.03)
-    g.rotation.x = -0.08
-    g.name = `Tick${t + 1}`
-    paper.add(g)
+    const cy = 0.62 - t * 0.46
+    const cx = 0.46
+    const a = mkStroke(0.13, 0.72, cx - 0.12, cy - 0.09)
+    const b = mkStroke(0.23, -0.52, cx + 0.01, cy + 0.005)
+    a.name = `Tick${t + 1}_a`
+    b.name = `Tick${t + 1}_b`
+    a.scale.x = 0.001
+    b.scale.x = 0.001
+    paper.add(a, b)
   }
 
-  // red pen resting at the corner
+  // ── final grade ring around an "A" (pops in after the last tick) ──
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(0.14, 0.022, 10, 32),
+    mat({ color: '#c81e1e', emissive: '#7e1010', emissiveIntensity: 0.4 })
+  )
+  ring.position.set(0.56, 0.88, sz + 0.02)
+  ring.name = 'GradeRing'
+  ring.scale.setScalar(0.001)
+  paper.add(ring)
+  const gradeA = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.1, 0.012), mat({ color: '#c81e1e' }))
+  gradeA.position.set(0.555, 0.878, sz + 0.012)
+  gradeA.rotation.z = -0.12
+  gradeA.name = 'GradeA'
+  gradeA.scale.setScalar(0.001)
+  paper.add(gradeA)
+
+  // ── red pen: hex barrel, grip, metal nib — origin AT THE TIP ──
   const pen = new THREE.Group()
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.62, 12), mat({ color: '#c22a2a', roughness: 0.35 }))
-  barrel.rotation.z = Math.PI / 2
-  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.12, 12), mat({ color: '#2c2c30' }))
-  tip.rotation.z = -Math.PI / 2
-  tip.position.x = -0.37
-  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 12), mat({ color: '#8f1d1d' }))
-  cap.rotation.z = Math.PI / 2
-  cap.position.x = 0.35
-  pen.add(barrel, tip, cap)
-  pen.position.set(-0.25, -1.18, 0.1)
-  pen.rotation.z = 0.18
   pen.name = 'Pen'
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.66, 6), mat({ color: '#c0392b', roughness: 0.3 }))
+  barrel.rotation.z = Math.PI / 2
+  barrel.position.x = 0.42
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.052, 0.14, 6), mat({ color: '#26262b', roughness: 0.6 }))
+  grip.rotation.z = Math.PI / 2
+  grip.position.x = 0.06
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.12, 6), mat({ color: '#aeb6c2', metalness: 0.85, roughness: 0.25 }))
+  cone.rotation.z = Math.PI / 2
+  cone.position.x = -0.05
+  const nib = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 8), mat({ color: '#1c1c20' }))
+  nib.position.x = -0.112
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.056, 0.056, 0.09, 6), mat({ color: '#8f1d1d', roughness: 0.35 }))
+  cap.rotation.z = Math.PI / 2
+  cap.position.x = 0.78
+  pen.add(barrel, grip, cone, nib, cap)
+  pen.position.set(-0.25, -1.16, 0.14)
+  pen.rotation.z = 0.22
   paper.add(pen)
 
   return paper

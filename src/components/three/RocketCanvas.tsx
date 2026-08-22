@@ -94,13 +94,13 @@ export default function RocketCanvas() {
         </Canvas>
       </div>
 
-      {/* Click zones over the rocket — top-right at page top, dead center at the footer */}
+      {/* Click zones over the rocket — desktop only (mobile users scroll/tap freely) */}
       {!launching && (
         <>
           <button
             onClick={launch}
             aria-label="Launch rocket — scroll back to top"
-            className={`group absolute right-[4%] top-[16%] z-20 h-56 w-44 transition-opacity duration-500 ${
+            className={`group absolute right-[4%] top-[16%] z-20 hidden h-56 w-44 lg:block transition-opacity duration-500 ${
               nearTop && !nearBottom ? 'opacity-100' : 'pointer-events-none opacity-0'
             }`}
           >
@@ -109,7 +109,7 @@ export default function RocketCanvas() {
           <button
             onClick={launch}
             aria-label="Launch rocket — scroll back to top"
-            className={`group absolute bottom-[26vh] left-1/2 z-20 h-72 w-48 -translate-x-1/2 transition-opacity duration-500 ${
+            className={`group absolute bottom-[26vh] left-1/2 z-20 hidden h-72 w-48 -translate-x-1/2 lg:block transition-opacity duration-500 ${
               nearBottom ? 'opacity-100' : 'pointer-events-none opacity-0'
             }`}
           >

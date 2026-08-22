@@ -32,8 +32,6 @@ export const footerLinks = [
   navLinks[5],
 ] as const
 
-export const marqueeWords = ['Physics', 'Theory', 'Revision', 'Paper'] as const
-
 export const socials = {
   facebook: 'https://www.facebook.com/njphysics/',
   instagram: 'https://www.instagram.com/nj_physics?igsh=NHlnaGhnd2lwM284',

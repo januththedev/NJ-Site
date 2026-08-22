@@ -6,6 +6,7 @@ import ExamPaper from './ExamPaper'
 interface Props {
   model: 'book' | 'caliper' | 'paper'
   className?: string
+  stageHeight?: string
   cameraPosition?: [number, number, number]
   fov?: number
   hoverRef?: React.MutableRefObject<boolean>
@@ -14,10 +15,11 @@ interface Props {
 }
 
 /** Compact auto-rotating 3D accent for sub-page heroes — much smaller than the main scenes. */
-export default function MiniModel({ model, className = '', cameraPosition = [0, 0.4, 4.6], fov = 40, hoverRef, graded, animate }: Props) {
+export default function MiniModel({ model, className = '', stageHeight, cameraPosition = [0, 0.4, 4.2], fov = 40, hoverRef, graded, animate }: Props) {
   return (
     <ModelStage
       className={className}
+      height={stageHeight}
       cameraPosition={cameraPosition}
       fov={fov}
       ariaLabel={model === 'book' ? 'Open physics book' : model === 'caliper' ? 'Vernier caliper measuring a specimen' : 'Graded exam paper'}

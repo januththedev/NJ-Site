@@ -1,13 +1,14 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Award, FlaskConical, Lightbulb, MapPin, Sparkles } from 'lucide-react'
+import { ContactShadows } from '@react-three/drei'
 import ModelStage from '../components/three/ModelStage'
 import OpenBook from '../components/three/OpenBook'
 import ExamPaper from '../components/three/ExamPaper'
 import VernierCaliper from '../components/three/VernierCaliper'
 import LankaMap from '../components/three/LankaMap'
-import VelocityTicker from '../components/ui/VelocityTicker'
 import SpotlightCard from '../components/ui/SpotlightCard'
+
 import SectionHeading from '../components/ui/SectionHeading'
 import StatCounter from '../components/ui/StatCounter'
 import MagneticButton from '../components/ui/MagneticButton'
@@ -15,7 +16,6 @@ import PosterFrame from '../components/ui/PosterFrame'
 import FaqAccordion from '../components/ui/FaqAccordion'
 import { useGsapContext, gsap, ScrollTrigger } from '../hooks/useGsapContext'
 import { hero, aboutTeaser, scheduleHighlights, cards, practicalsBand, coverage, ctaBand } from '../data/home'
-import { marqueeWords } from '../data/site'
 import { classes } from '../data/classes'
 import { exams } from '../data/exams'
 import { topReviews } from '../data/reviews'
@@ -111,10 +111,8 @@ export default function Home() {
         </div>
       </section>
 
-      <VelocityTicker words={marqueeWords} />
-
       {/* ── About teaser ───────────────────────────────────────────── */}
-      <section className="container-x mt-24 grid items-center gap-12 lg:grid-cols-2">
+      <section className="container-x mt-16 grid items-center gap-10 sm:mt-20 lg:mt-24 lg:grid-cols-2">
         <div data-rise>
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-glow-cyan">{aboutTeaser.eyebrow}</p>
           <h2 className="font-display text-balance text-3xl font-bold leading-tight text-white sm:text-4xl">{aboutTeaser.title}</h2>
@@ -144,7 +142,7 @@ export default function Home() {
       </section>
 
       {/* ── Two interactive 3D cards ───────────────────────────────── */}
-      <section className="container-x mt-28">
+      <section className="container-x mt-16 sm:mt-20 lg:mt-28">
         <SectionHeading eyebrow="What we cover" title="Learn Smarter. Score Higher." />
         <div className="grid gap-6 lg:grid-cols-2" data-rise>
           {cards.map((card) => (
@@ -163,6 +161,7 @@ export default function Home() {
                   <pointLight position={[-3, 1, 2]} intensity={14} color="#38e8ff" distance={14} />
                   {card.model === 'book' && <OpenBook hoverRef={bookHover} />}
                   {card.model === 'paper' && <ExamPaper trigger={gradeKey} />}
+                  <ContactShadows position={[0, -1.05, 0]} opacity={0.42} scale={5} blur={2.6} far={2.2} color="#000814" />
                 </ModelStage>
               </div>
               <div ref={card.model === 'paper' ? paperZone : undefined} className="p-7 pt-2">
@@ -175,7 +174,7 @@ export default function Home() {
       </section>
 
       {/* ── Class schedule highlights (kept) ───────────────────────── */}
-      <section className="container-x mt-28">
+      <section className="container-x mt-16 sm:mt-20 lg:mt-28">
         <SectionHeading eyebrow={scheduleHighlights.kicker} title={scheduleHighlights.title} />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4" data-rise>
           {classes.posters.map((p) => (
@@ -188,8 +187,8 @@ export default function Home() {
       </section>
 
       {/* ── Practical sessions — Vernier caliper fly-in ────────────── */}
-      <section id="practicals" className="relative mt-32 overflow-hidden border-y border-white/5 bg-gradient-to-b from-night-900/40 to-transparent py-20">
-        <div className="container-x grid items-center gap-10 lg:grid-cols-2">
+      <section id="practicals" className="relative mt-20 overflow-hidden border-y border-white/5 bg-gradient-to-b from-night-900/40 to-transparent py-12 sm:py-16 lg:mt-32 lg:py-20">
+        <div className="container-x grid items-center gap-8 sm:gap-10 lg:grid-cols-2">
           <div className="order-2 h-[320px] sm:h-[380px] lg:order-1">
             <div className="glass h-full rounded-[2rem] p-3">
               <ModelStage cameraPosition={[0, 0.5, 5.2]} fov={44} ariaLabel="Vernier caliper measuring a brass specimen">
@@ -218,11 +217,11 @@ export default function Home() {
       </section>
 
       {/* ── Island-wide coverage — 3D Sri Lanka map with 27 pins ──── */}
-      <section className="container-x mt-32">
+      <section className="container-x mt-20 sm:mt-24 lg:mt-32">
         <SectionHeading eyebrow={coverage.kicker} title={`${exams.centres.length} exam halls across the island.`} />
         <p className="mx-auto -mt-6 mb-10 max-w-xl text-center text-slate-400">{coverage.body}</p>
         <div className="glass mx-auto max-w-3xl rounded-[2rem] p-4" data-rise>
-          <ModelStage className="h-[440px]" cameraPosition={[0, 2.7, 5.6]} fov={40} ariaLabel="3D map of Sri Lanka with 27 glowing exam hall pins">
+          <ModelStage height="440px" cameraPosition={[0, 2.7, 5.6]} fov={40} ariaLabel="3D map of Sri Lanka with 27 glowing exam hall pins">
             <ambientLight intensity={0.7} />
             <directionalLight position={[4, 7, 5]} intensity={1.4} color="#cfe4ff" />
             <pointLight position={[-4, 3, 3]} intensity={20} color="#38e8ff" distance={16} />
@@ -237,13 +236,13 @@ export default function Home() {
       </section>
 
       {/* ── FAQ (kept) ─────────────────────────────────────────────── */}
-      <section className="container-x mt-32">
+      <section className="container-x mt-20 sm:mt-24 lg:mt-32">
         <SectionHeading eyebrow="Questions about Physics Class" title="FAQ – We'll give you a hand!" />
         <FaqAccordion items={faqs} />
       </section>
 
       {/* ── Student reviews (bottom of homepage, 3 featured) ──────── */}
-      <section className="container-x mt-32">
+      <section className="container-x mt-20 sm:mt-24 lg:mt-32">
         <SectionHeading eyebrow="Student Review" title="Real Stories, Real Results" />
         <div className="grid gap-5 md:grid-cols-3" data-rise>
           {topReviews.slice(0, 3).map((r) => (
@@ -268,7 +267,7 @@ export default function Home() {
       </section>
 
       {/* ── CTA band above the footer rocket ───────────────────────── */}
-      <section className="container-x mb-8 mt-32">
+      <section className="container-x mb-8 mt-20 sm:mt-24 lg:mt-32">
         <div className="glass-strong relative overflow-hidden rounded-[2rem] p-10 text-center sm:p-14" data-rise>
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_circle_at_50%_-20%,rgba(56,232,255,0.15),transparent)]" />
           <h2 className="font-display text-3xl font-bold text-white sm:text-4xl">{ctaBand.header}</h2>
