@@ -1,6 +1,5 @@
-import { Link } from 'react-router-dom'
-import { Facebook, Instagram, Mail, MapPin, Phone, Youtube } from 'lucide-react'
-import { footerLinks, site, socials } from '../../data/site'
+import { Mail, MapPin, Phone } from 'lucide-react'
+import { site, socials } from '../../data/site'
 
 const TikTok = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -8,70 +7,51 @@ const TikTok = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 )
 
+/**
+ * Footer: contact info on the left, Sinhala tagline on the right, and an
+ * open middle column where the scroll-journey rocket lands dead center.
+ */
 export default function Footer() {
   return (
-    <footer className="relative mt-24 border-t border-white/10 bg-night-900/60">
-      <div className="container-x grid gap-12 py-16 md:grid-cols-[1.4fr_1fr_1fr]">
+    <footer className="relative z-10 mt-10 border-t border-white/10 bg-night-900/55 pb-8 pt-14">
+      <div className="container-x grid items-center gap-12 md:grid-cols-[1fr_minmax(180px,0.9fr)_1fr]">
+        {/* Contact — left */}
         <div>
-          <p className="max-w-md font-display text-xl leading-relaxed text-slate-200">{site.footerTagline}</p>
-          <div className="mt-6 flex gap-3">
-            <a href={socials.facebook} target="_blank" rel="noreferrer" aria-label="Facebook" className="glass grid h-10 w-10 place-items-center rounded-full text-slate-300 transition-colors hover:text-glow-cyan">
-              <Facebook className="h-4 w-4" />
-            </a>
-            <a href={socials.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="glass grid h-10 w-10 place-items-center rounded-full text-slate-300 transition-colors hover:text-glow-cyan">
-              <Instagram className="h-4 w-4" />
-            </a>
-            <a href={socials.tiktok} target="_blank" rel="noreferrer" aria-label="TikTok" className="glass grid h-10 w-10 place-items-center rounded-full text-slate-300 transition-colors hover:text-glow-cyan">
-              <TikTok className="h-4 w-4" />
-            </a>
-            <a href={socials.youtube} target="_blank" rel="noreferrer" aria-label="YouTube" className="glass grid h-10 w-10 place-items-center rounded-full text-slate-300 transition-colors hover:text-glow-cyan">
-              <Youtube className="h-4 w-4" />
-            </a>
+          <h4 className="mb-5 text-xs font-semibold uppercase tracking-[0.25em] text-slate-500">Contact</h4>
+          <ul className="space-y-3 text-sm text-slate-300">
+            <li className="flex items-center gap-2.5">
+              <Phone className="h-4 w-4 shrink-0 text-glow-cyan" />
+              <a href={site.phoneHref} className="hover:text-white">{site.phone}</a>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <Mail className="h-4 w-4 shrink-0 text-glow-cyan" />
+              <a href={`mailto:${site.email}`} className="hover:text-white break-all">{site.email}</a>
+            </li>
+            <li className="flex items-center gap-2.5">
+              <MapPin className="h-4 w-4 shrink-0 text-glow-cyan" /> {site.address}
+            </li>
+          </ul>
+          <div className="mt-6 flex gap-2.5 text-xs">
+            <a href={socials.facebook} target="_blank" rel="noreferrer" className="glass rounded-full px-3 py-1.5 text-slate-400 hover:text-glow-cyan">Facebook</a>
+            <a href={socials.instagram} target="_blank" rel="noreferrer" className="glass rounded-full px-3 py-1.5 text-slate-400 hover:text-glow-cyan">Instagram</a>
+            <a href={socials.tiktok} target="_blank" rel="noreferrer" className="glass rounded-full px-3 py-1.5 text-slate-400 hover:text-glow-cyan">TikTok</a>
+            <a href={socials.youtube} target="_blank" rel="noreferrer" className="glass rounded-full px-3 py-1.5 text-slate-400 hover:text-glow-cyan">YouTube</a>
           </div>
         </div>
 
-        <div>
-          <h4 className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Quick Links</h4>
-          <ul className="space-y-2.5">
-            {footerLinks.map((l) => (
-              <li key={l.label}>
-                <Link to={'to' in l ? l.to : '/'} className="text-sm text-slate-400 transition-colors hover:text-glow-cyan">
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-            <li>
-              <Link to="/student-login" className="text-sm text-slate-400 transition-colors hover:text-glow-cyan">
-                Gallery Information
-              </Link>
-            </li>
-          </ul>
-        </div>
+        {/* Middle column intentionally left open — the rocket lands here */}
+        <div aria-hidden className="hidden h-64 md:block" />
 
-        <div>
-          <h4 className="mb-4 text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Information</h4>
-          <ul className="space-y-3 text-sm text-slate-400">
-            <li className="flex items-start gap-2.5">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-glow-cyan" /> {site.address}
-            </li>
-            <li className="flex items-start gap-2.5">
-              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-glow-cyan" />
-              <a href={`mailto:${site.email}`} className="hover:text-white">
-                {site.email}
-              </a>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <Phone className="mt-0.5 h-4 w-4 shrink-0 text-glow-cyan" />
-              <a href={site.phoneHref} className="hover:text-white">
-                {site.phone}
-              </a>
-            </li>
-          </ul>
+        {/* Tagline — right */}
+        <div className="md:text-right">
+          <p className="font-display text-lg leading-relaxed text-slate-200 md:text-xl" lang="si">
+            යුගයේ අතිශ්‍රේෂ්ඨතම A/L භෞතික විද්‍යා ගුරුවරයා — NJ Physics සමඟ ඔබේ ජයග්‍රහණය තහවුරු කරගන්න.
+          </p>
         </div>
       </div>
 
-      <div className="border-t border-white/5 py-6 text-center text-xs text-slate-500">
-        © Copyright 2025 Physics.lk | Developed by <span className="font-semibold text-slate-300">Januth Nimnal</span>.
+      <div className="container-x mt-12 border-t border-white/5 pt-6 text-center text-xs text-slate-500">
+        Copyright 2026 Physics.lk developed by Januth
       </div>
     </footer>
   )

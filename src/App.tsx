@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import SmoothScroll from './components/layout/SmoothScroll'
 import Layout from './components/layout/Layout'
+import RocketCanvas from './components/three/RocketCanvas'
 import Home from './pages/Home'
 import About from './pages/About'
 import Classes from './pages/Classes'
@@ -16,6 +17,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <SmoothScroll>
+        {/* Global scroll-journey rocket — fixed behind the UI layer */}
+        <RocketCanvas />
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<Home />} />

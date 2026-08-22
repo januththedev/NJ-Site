@@ -23,7 +23,7 @@ export default function About() {
 
   return (
     <div ref={root}>
-      <PageHero eyebrow="About me" title={about.name} subtitle={about.role} model="island" />
+      <PageHero eyebrow="About me" title={about.name} subtitle={about.role} />
 
       {/* Results wall — island ranks */}
       <section className="container-x mt-16">

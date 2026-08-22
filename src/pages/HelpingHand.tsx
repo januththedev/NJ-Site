@@ -11,7 +11,7 @@ import { practicalsBand } from '../data/home'
 export default function HelpingHand() {
   return (
     <div>
-      <PageHero eyebrow="Helping Hands" title={helpingHand.title} model="prism" />
+      <PageHero eyebrow="Helping Hands" title={helpingHand.title} />
 
       {/* Seminar card */}
       <section className="container-x mt-8">
@@ -67,7 +67,7 @@ export default function HelpingHand() {
 
       {/* Practicals prism moment */}
       <section className="container-x mt-24 grid items-center gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-        <MiniModel model="prism" className="h-[280px]" cameraPosition={[0, 0.4, 5.4]} modelY={-0.35} speed={0.85} />
+        <MiniModel model="caliper" className="h-[280px]" cameraPosition={[0, 0.3, 4.4]} />
         <div data-rise>
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-glow-violet">{practicalsBand.kicker}</p>
           <h2 className="font-display text-balance text-3xl font-bold text-white sm:text-4xl">Come, let&apos;s learn physics with practicals.</h2>

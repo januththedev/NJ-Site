@@ -1,7 +1,7 @@
 export const hero = {
   eyebrow: 'NJ PHYSICS · NILANTHA JAYASURIYA',
-  titleTop: 'Learn, Be Inspired.',
-  titleBottom: 'Achieve Excellence.',
+  titleTop: 'Best Physics',
+  titleBottom: 'Teaching.',
   subtitle:
     "Sri Lanka's most trusted A/L Physics class — Theory, MCQ, Structured & Past Paper Discussions. Islandwide and online.",
   badges: [
@@ -29,16 +29,35 @@ export const scheduleHighlights = {
   venues: ['සුසිප්වන් · GAMPAHA', 'ONLINE · ලංකාවටම', 'සයන්ස් සෙන්ටර් · GALLE'],
 }
 
-export const monthlyTutes = {
-  kicker: 'Monthly Highlights',
-  title: 'Every month, I share valuable Physics tutes',
-  items: ['2027 Theory — January', '2027 Theory — February', '2027 Theory — March', '2027 Theory — April'],
-  cta: 'Contact Now',
-}
+export const cards = [
+  {
+    id: 'theory-revision',
+    model: 'book' as const,
+    title: 'Theory & Revision',
+    body: 'Full-syllabus theory taught practically, with structured revision sessions and short notes that make every chapter stick. Turn the pages — scroll or hover to flip faster.',
+  },
+  {
+    id: 'papers',
+    model: 'paper' as const,
+    title: 'Papers',
+    body: 'MCQ & structured paper discussions, mock exams with marking, and A/B/C/S grading that builds exam-day confidence. Watch it get graded.',
+  },
+]
 
 export const practicalsBand = {
   kicker: 'Practical Sessions',
   title: "Come, let's learn physics with practicals.",
   body:
-    'Theory alone is never enough. See the laws of light, waves and mechanics come alive in dedicated practical sessions — because physics you witness is physics you never forget.',
+    'Theory alone is never enough. Measure, observe and verify — dedicated practical sessions with real instruments, because physics you witness is physics you never forget.',
+}
+
+export const coverage = {
+  kicker: 'Island wide coverage',
+  title: '27 exam halls across the island.',
+  body: 'Join the mock-exam network at a centre near you — every hall has its own Telegram group for updates and results.',
+}
+
+export const ctaBand = {
+  header: 'Ready to learn with Nilantha Sir',
+  sub: 'A/L Physics — Theory · Revision · Paper · Practicals.',
 }

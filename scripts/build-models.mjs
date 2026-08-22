@@ -307,4 +307,368 @@ const prismWrap = new THREE.Scene()
 prismWrap.add(buildPrism())
 await exportGlb(prismWrap, join(outDir, 'prism.glb'))
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Concept 3 — Open physics book with flippable pages (Theory & Revision card)
+function buildOpenBook() {
+  const book = new THREE.Group()
+  book.name = 'OpenBook'
+
+  const coverMat = mat({ color: '#274b8f', roughness: 0.55 })
+  const pageMat = mat({ color: '#f2ecdd', roughness: 0.9 })
+  const lineMat = mat({ color: '#3a4356', roughness: 0.8 })
+
+  // back cover boards angled open around the spine (Y axis at x=0)
+  for (const side of [-1, 1]) {
+    const cover = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.45, 0.06), coverMat)
+    const pivot = new THREE.Group()
+    pivot.rotation.y = side * 0.42
+    cover.position.x = (side * 1.05) / 2
+    pivot.add(cover)
+    pivot.name = side < 0 ? 'CoverLeft' : 'CoverRight'
+    book.add(pivot)
+  }
+
+  // static page stacks on both sides
+  for (const side of [-1, 1]) {
+    for (let i = 0; i < 5; i++) {
+      const page = new THREE.Mesh(new THREE.BoxGeometry(0.98, 1.36, 0.018), pageMat)
+      const pivot = new THREE.Group()
+      pivot.rotation.y = side * (0.36 - i * 0.02)
+      page.position.set((side * 0.98) / 2, 0, 0.004 * i + side * 0.002)
+      page.position.z = 0.05 + i * 0.02
+      pivot.add(page)
+      book.add(pivot)
+    }
+  }
+
+  // text lines on the top-right static page
+  for (let r = 0; r < 7; r++) {
+    const line = new THREE.Mesh(new THREE.BoxGeometry(0.72, 0.012, 0.03), lineMat)
+    line.position.set(0.52, 0.52 - r * 0.16, 0.155)
+    line.name = `TextLine${r}`
+    book.add(line)
+  }
+  // a small "diagram" square (physics-y)
+  const diagram = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.014, 8, 24), mat({ color: '#38e8ff', emissive: '#38e8ff', emissiveIntensity: 0.6 }))
+  diagram.position.set(0.55, -0.32, 0.16)
+  book.add(diagram)
+
+  // flipping pages — pivoted at the spine, rotated by runtime
+  for (let i = 0; i < 4; i++) {
+    const page = new THREE.Mesh(new THREE.BoxGeometry(0.96, 1.34, 0.016), pageMat)
+    page.position.x = 0.48
+    const pivot = new THREE.Group()
+    pivot.add(page)
+    pivot.position.z = 0.16 + i * 0.022
+    pivot.rotation.y = 0.35
+    pivot.name = `FlipPage${i}`
+    book.add(pivot)
+  }
+
+  // spine
+  const spine = new THREE.Mesh(new THREE.BoxGeometry(0.09, 1.5, 0.1), mat({ color: '#1b356b', roughness: 0.6 }))
+  spine.position.z = 0.08
+  book.add(spine)
+
+  return book
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Concept 4 — Exam paper with red-pen grading marks (Papers card)
+function buildExamPaper() {
+  const paper = new THREE.Group()
+  paper.name = 'ExamPaper'
+
+  const sheet = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 2.0, 0.03),
+    mat({ color: '#f5f1e6', roughness: 0.85 })
+  )
+  sheet.rotation.x = -0.08
+  paper.add(sheet)
+
+  const lineMat = mat({ color: '#495064', roughness: 0.8 })
+  for (let r = 0; r < 9; r++) {
+    const w = r % 3 === 2 ? 0.9 : 1.18
+    const line = new THREE.Mesh(new THREE.BoxGeometry(w, 0.018, 0.028), lineMat)
+    line.position.set(-0.04, 0.78 - r * 0.185, 0.022)
+    line.rotation.x = -0.08
+    paper.add(line)
+  }
+  // red margin line
+  const margin = new THREE.Mesh(new THREE.BoxGeometry(0.015, 1.85, 0.026), mat({ color: '#e05252' }))
+  margin.position.set(-0.58, 0, 0.023)
+  margin.rotation.x = -0.08
+  paper.add(margin)
+
+  // red check ticks (hidden until graded) — two strokes forming ✓
+  const tickMat = () =>
+    new THREE.MeshStandardMaterial({ color: '#d92b2b', emissive: '#a11212', emissiveIntensity: 0.35, roughness: 0.5, transparent: true, opacity: 0 })
+  for (let t = 0; t < 4; t++) {
+    const g = new THREE.Group()
+    const s1 = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.028, 0.02), tickMat())
+    s1.rotation.z = 0.7
+    s1.position.x = -0.03
+    const s2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.028, 0.02), tickMat())
+    s2.rotation.z = -0.5
+    s2.position.x = 0.07
+    g.add(s1, s2)
+    g.position.set(0.48, 0.72 - t * 0.46, 0.03)
+    g.rotation.x = -0.08
+    g.name = `Tick${t + 1}`
+    paper.add(g)
+  }
+
+  // red pen resting at the corner
+  const pen = new THREE.Group()
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.62, 12), mat({ color: '#c22a2a', roughness: 0.35 }))
+  barrel.rotation.z = Math.PI / 2
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.12, 12), mat({ color: '#2c2c30' }))
+  tip.rotation.z = -Math.PI / 2
+  tip.position.x = -0.37
+  const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 12), mat({ color: '#8f1d1d' }))
+  cap.rotation.z = Math.PI / 2
+  cap.position.x = 0.35
+  pen.add(barrel, tip, cap)
+  pen.position.set(-0.25, -1.18, 0.1)
+  pen.rotation.z = 0.18
+  pen.name = 'Pen'
+  paper.add(pen)
+
+  return paper
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Concept 5 — Vernier caliper measuring a specimen (Practical Sessions)
+function buildVernierCaliper() {
+  const rig = new THREE.Group()
+  rig.name = 'CaliperRig'
+
+  const steel = mat({ color: '#b9c2cf', metalness: 0.85, roughness: 0.3 })
+
+  const caliper = new THREE.Group()
+  caliper.name = 'Caliper'
+  const beam = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.14, 0.16), steel)
+  caliper.add(beam)
+  // main scale ticks
+  for (let i = 0; i <= 24; i++) {
+    const tick = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.05, 0.02), mat({ color: '#39404f' }))
+    tick.position.set(-1.6 + i * 0.1333, 0.095, 0)
+    caliper.add(tick)
+  }
+  // fixed jaw (left)
+  const fixedJaw = new THREE.Group()
+  const fjPlate = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.62, 0.18), steel)
+  fjPlate.position.y = 0.24
+  const fjArm = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.14, 0.16), steel)
+  fjArm.position.x = 0.17
+  fixedJaw.add(fjPlate, fjArm)
+  fixedJaw.position.x = -0.85
+  fixedJaw.name = 'FixedJaw'
+  caliper.add(fixedJaw)
+
+  // sliding jaw (moves along X at runtime)
+  const slider = new THREE.Group()
+  const sjBody = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.78, 0.2), mat({ color: '#99a3b2', metalness: 0.8, roughness: 0.35 }))
+  sjBody.position.y = 0.3
+  const sjArm = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.14, 0.16), steel)
+  sjArm.position.x = -0.16
+  const thumb = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.1, 12), mat({ color: '#ffb454', metalness: 0.6, roughness: 0.4 }))
+  thumb.rotation.x = Math.PI / 2
+  thumb.position.set(0, 0.3, 0.14)
+  slider.add(sjBody, sjArm, thumb)
+  slider.position.x = 1.75
+  slider.name = 'Slider'
+  caliper.add(slider)
+
+  // depth rod
+  const rod = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.03, 0.03), steel)
+  rod.position.set(2.2, -0.02, 0)
+  caliper.add(rod)
+
+  caliper.position.y = 0.4
+  rig.add(caliper)
+
+  // specimen being measured (brass cylinder between the jaws)
+  const specimen = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.3, 0.3, 0.62, 20),
+    mat({ color: '#c9a24b', metalness: 0.9, roughness: 0.25 })
+  )
+  specimen.position.set(-0.1, 0.31, 0)
+  specimen.name = 'Specimen'
+  rig.add(specimen)
+
+  return rig
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Concept 6 — Stylized Sri Lanka map base (27 pins added at runtime)
+function buildLankaMap() {
+  const group = new THREE.Group()
+  group.name = 'LankaMap'
+
+  // simplified coastline polygon [lng, lat]
+  const outline = [
+    [80.21, 9.82], [80.42, 9.65], [81.0, 8.9], [81.23, 8.57], [81.45, 8.35],
+    [81.67, 7.9], [81.86, 7.0], [81.75, 6.75], [81.22, 6.45], [80.78, 6.03],
+    [80.45, 5.92], [80.28, 5.97], [79.86, 6.44], [79.73, 7.0], [79.77, 7.58],
+    [79.72, 8.08], [79.98, 8.35], [79.9, 8.9], [80.0, 9.35],
+  ]
+  const shape = new THREE.Shape()
+  outline.forEach(([lng, lat], i) => {
+    const x = (lng - 80.8) * 2.6
+    const y = (lat - 7.87) * 2.6
+    if (i === 0) shape.moveTo(x, y)
+    else shape.lineTo(x, y)
+  })
+  shape.closePath()
+
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: 0.22, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 2 })
+  geo.center()
+  const land = new THREE.Mesh(
+    geo,
+    mat({ color: '#182132', metalness: 0.55, roughness: 0.4, emissive: '#0d2436', emissiveIntensity: 0.5 })
+  )
+  land.name = 'LandMass'
+  group.add(land)
+
+  // glowing underlay halo
+  const haloGeo = new THREE.ExtrudeGeometry(shape, { depth: 0.06, bevelEnabled: false })
+  haloGeo.center()
+  const halo = new THREE.Mesh(
+    haloGeo,
+    mat({ color: '#38e8ff', emissive: '#38e8ff', emissiveIntensity: 1.4, transparent: true, opacity: 0.28 })
+  )
+  halo.scale.set(1.035, 1.035, 1)
+  halo.position.z = -0.1
+  halo.name = 'Halo'
+  group.add(halo)
+
+  return group
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Concept 7 — Rocket on launchpad (scroll journey hero + blast-off)
+function buildRocket() {
+  const assembly = new THREE.Group()
+  assembly.name = 'RocketAssembly'
+
+  const rocket = new THREE.Group()
+  rocket.name = 'Rocket'
+  const white = mat({ color: '#eef1f6', roughness: 0.35, metalness: 0.15 })
+  const dark = mat({ color: '#23262e', roughness: 0.5, metalness: 0.6 })
+  const red = mat({ color: '#d33a3a', roughness: 0.4 })
+
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.56, 3.4, 28), white)
+  body.position.y = 2.2
+  rocket.add(body)
+  const stripe = new THREE.Mesh(new THREE.CylinderGeometry(0.505, 0.505, 0.22, 28), red)
+  stripe.position.y = 3.1
+  rocket.add(stripe)
+  const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.5, 0.7, 28), white)
+  upper.position.y = 4.25
+  rocket.add(upper)
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.15, 28), red)
+  nose.position.y = 5.17
+  rocket.add(nose)
+  // porthole
+  const port = new THREE.Mesh(new THREE.TorusGeometry(0.13, 0.035, 10, 24), dark)
+  port.position.set(0, 3.7, 0.47)
+  rocket.add(port)
+  const glass = new THREE.Mesh(new THREE.CircleGeometry(0.115, 20), mat({ color: '#9fd8ff', emissive: '#3d7ea8', emissiveIntensity: 0.7 }))
+  glass.position.set(0, 3.7, 0.475)
+  rocket.add(glass)
+
+  // fins ×3
+  const finShape = new THREE.Shape()
+  finShape.moveTo(0, 0)
+  finShape.lineTo(0.85, -0.15)
+  finShape.lineTo(0.85, 0.55)
+  finShape.lineTo(0, 1.05)
+  finShape.closePath()
+  const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.07, bevelEnabled: false })
+  for (let i = 0; i < 3; i++) {
+    const fin = new THREE.Mesh(finGeo, red)
+    const holder = new THREE.Group()
+    fin.position.z = -0.035
+    holder.add(fin)
+    holder.rotation.y = (i * Math.PI * 2) / 3
+    holder.position.y = 0.55
+    rocket.add(holder)
+  }
+
+  // engine section + nozzle
+  const engine = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.6, 0.5, 28), dark)
+  engine.position.y = 0.25
+  rocket.add(engine)
+  const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.46, 0.55, 24, 1, true), mat({ color: '#15161b', metalness: 0.9, roughness: 0.35, side: THREE.DoubleSide }))
+  nozzle.position.y = -0.22
+  rocket.add(nozzle)
+  const glow = new THREE.Mesh(
+    new THREE.CircleGeometry(0.3, 20),
+    mat({ color: '#ffd9a0', emissive: '#ff8c2a', emissiveIntensity: 2.4 })
+  )
+  glow.rotation.x = Math.PI / 2
+  glow.position.y = -0.42
+  glow.name = 'EngineGlow'
+  rocket.add(glow)
+
+  assembly.add(rocket)
+
+  // launchpad
+  const pad = new THREE.Group()
+  pad.name = 'LaunchPad'
+  const deck = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.7, 0.4, 10), mat({ color: '#3a3f4c', roughness: 0.9 }))
+  deck.position.y = -0.95
+  pad.add(deck)
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(2.28, 0.035, 8, 48), mat({ color: '#ffb454', emissive: '#ffb454', emissiveIntensity: 1.2 }))
+  ring.rotation.x = Math.PI / 2
+  ring.position.y = -0.74
+  pad.add(ring)
+  for (let i = 0; i < 4; i++) {
+    const clamp = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.5, 0.22), dark)
+    const a = (i * Math.PI) / 2 + Math.PI / 4
+    clamp.position.set(Math.cos(a) * 0.68, -0.55, Math.sin(a) * 0.68)
+    pad.add(clamp)
+  }
+  // service tower
+  const tower = new THREE.Group()
+  const mast = new THREE.Mesh(new THREE.BoxGeometry(0.26, 6.4, 0.26), mat({ color: '#565e70', metalness: 0.6, roughness: 0.5 }))
+  mast.position.y = 2.4
+  tower.add(mast)
+  for (let i = 0; i < 4; i++) {
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.15, 0.09, 0.09), mat({ color: '#565e70' }))
+    arm.position.set(-0.62, 1.4 + i * 1.15, 0)
+    tower.add(arm)
+  }
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), mat({ color: '#ff5252', emissive: '#ff2020', emissiveIntensity: 2 }))
+  beacon.position.y = 5.75
+  tower.add(beacon)
+  tower.position.set(1.75, -0.75, 0)
+  tower.name = 'Tower'
+  pad.add(tower)
+
+  assembly.add(pad)
+  return assembly
+}
+
+const bookScene = new THREE.Scene()
+bookScene.add(buildOpenBook())
+await exportGlb(bookScene, join(outDir, 'open-book.glb'))
+
+const paperScene = new THREE.Scene()
+paperScene.add(buildExamPaper())
+await exportGlb(paperScene, join(outDir, 'exam-paper.glb'))
+
+const caliperScene = new THREE.Scene()
+caliperScene.add(buildVernierCaliper())
+await exportGlb(caliperScene, join(outDir, 'vernier-caliper.glb'))
+
+const lankaScene = new THREE.Scene()
+lankaScene.add(buildLankaMap())
+await exportGlb(lankaScene, join(outDir, 'sri-lanka.glb'))
+
+const rocketScene = new THREE.Scene()
+rocketScene.add(buildRocket())
+await exportGlb(rocketScene, join(outDir, 'rocket.glb'))
+
 console.log('Done.')
