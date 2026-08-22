@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
+import { useLocation } from 'react-router-dom'
 import RocketScene from './RocketScene'
 import { gsap } from '../../hooks/useGsapContext'
 import { getLenis } from '../layout/SmoothScroll'
@@ -7,13 +8,14 @@ import { getLenis } from '../layout/SmoothScroll'
 type FlightWindow = Window & { __startFlight?: () => void; __flightActive?: boolean }
 
 /**
- * Global fixed canvas hosting the scroll-journey rocket.
+ * Global fixed canvas hosting the scroll-journey rocket (HOME PAGE ONLY).
  * - Sits behind the UI (z-0); raises above content (z-40) while launching so
  *   the rocket stays locked center while the page scrolls past (parallax).
- * - Invisible click zones over the rocket's hero position (top-right) and
- *   footer position (center) trigger the 5-second ScrollTo blast-off.
+ * - Invisible click zones over the rocket: top-right at page top (desktop),
+ *   dead-center above the footer (all viewports) — tap to blast off.
  */
 export default function RocketCanvas() {
+  const { pathname } = useLocation()
   const [launching, setLaunching] = useState(false)
   const [nearTop, setNearTop] = useState(true)
   const [nearBottom, setNearBottom] = useState(false)
@@ -69,6 +71,9 @@ export default function RocketCanvas() {
 
   const dimmed = !nearTop && !nearBottom
 
+  // The rocket journey belongs to the landing page only
+  if (pathname !== '/') return null
+
   return (
     <>
       <div
@@ -94,7 +99,8 @@ export default function RocketCanvas() {
         </Canvas>
       </div>
 
-      {/* Click zones over the rocket — desktop only (mobile users scroll/tap freely) */}
+      {/* Click zones over the rocket — top-right at page top (desktop), and
+          dead-center above the footer on every viewport (tap = blast off) */}
       {!launching && (
         <>
           <button
@@ -109,7 +115,7 @@ export default function RocketCanvas() {
           <button
             onClick={launch}
             aria-label="Launch rocket — scroll back to top"
-            className={`group absolute bottom-[26vh] left-1/2 z-20 hidden h-72 w-48 -translate-x-1/2 lg:block transition-opacity duration-500 ${
+            className={`group absolute bottom-[30vh] left-1/2 z-20 h-64 w-40 -translate-x-1/2 sm:h-72 sm:w-48 transition-opacity duration-500 ${
               nearBottom ? 'opacity-100' : 'pointer-events-none opacity-0'
             }`}
           >
