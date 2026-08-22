@@ -8,17 +8,19 @@ import { getLenis } from '../layout/SmoothScroll'
 type FlightWindow = Window & { __startFlight?: () => void; __flightActive?: boolean }
 
 /**
- * Global fixed canvas hosting the scroll-journey rocket (HOME PAGE ONLY).
- * - Sits behind the UI (z-0); raises above content (z-40) while launching so
- *   the rocket stays locked center while the page scrolls past (parallax).
- * - Invisible click zones over the rocket: top-right at page top (desktop),
- *   dead-center above the footer (all viewports) — tap to blast off.
+ * Fixed canvas hosting the scroll-journey rocket (HOME PAGE ONLY).
+ * - Behind the UI (z-0) while browsing; dimmed mid-page; raised in FRONT of
+ *   the footer (z-30) when the footer is in view; above everything (z-40)
+ *   during the launch so the rocket stays center while content flies past.
+ * - The launch button tracks the rocket's projected screen position every
+ *   frame, so "click the rocket" works at any size, any scroll position.
  */
 export default function RocketCanvas() {
   const { pathname } = useLocation()
   const [launching, setLaunching] = useState(false)
-  const [nearTop, setNearTop] = useState(true)
   const [nearBottom, setNearBottom] = useState(false)
+  const screenRef = useRef({ x: -999, y: -999, visible: false })
+  const btnRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
     let ticking = false
@@ -28,7 +30,6 @@ export default function RocketCanvas() {
       requestAnimationFrame(() => {
         const y = window.scrollY
         const max = document.documentElement.scrollHeight - window.innerHeight
-        setNearTop(y < window.innerHeight * 0.55)
         setNearBottom(max > 0 && y > max - window.innerHeight * 0.75)
         ticking = false
       })
@@ -41,6 +42,24 @@ export default function RocketCanvas() {
       window.removeEventListener('resize', onScroll)
     }
   }, [])
+
+  // move the click target with the rocket's projected position
+  useEffect(() => {
+    let raf = 0
+    const loop = () => {
+      const b = btnRef.current
+      const s = screenRef.current
+      if (b) {
+        const show = !launching && s.visible
+        b.style.opacity = show ? '1' : '0'
+        b.style.pointerEvents = show ? 'auto' : 'none'
+        if (show || s.visible) b.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -86%)`
+      }
+      raf = requestAnimationFrame(loop)
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [launching])
 
   const launch = () => {
     const w = window as FlightWindow
@@ -69,7 +88,7 @@ export default function RocketCanvas() {
     })
   }
 
-  const dimmed = !nearTop && !nearBottom
+  const dimmed = !nearBottom
 
   // The rocket journey belongs to the landing page only
   if (pathname !== '/') return null
@@ -79,7 +98,7 @@ export default function RocketCanvas() {
       <div
         aria-hidden
         className={`pointer-events-none fixed inset-0 transition-opacity duration-700 ${
-          launching ? 'z-40 opacity-100' : dimmed ? 'z-0 opacity-25' : 'z-0 opacity-100'
+          launching ? 'z-40 opacity-100' : nearBottom ? 'z-30 opacity-100' : dimmed ? 'z-0 opacity-25' : 'z-0 opacity-100'
         }`}
       >
         <Canvas
@@ -89,39 +108,22 @@ export default function RocketCanvas() {
           style={{ background: 'transparent' }}
         >
           <Suspense fallback={null}>
-            <RocketScene
-              onFlightEnd={() => {
-                ;(window as FlightWindow).__flightActive = false
-                setLaunching(false)
-              }}
-            />
+            <RocketScene onFlightEnd={() => setLaunching(false)} screenRef={screenRef} />
           </Suspense>
         </Canvas>
       </div>
 
-      {/* Click zones over the rocket — top-right at page top (desktop), and
-          dead-center above the footer on every viewport (tap = blast off) */}
+      {/* Launch target glued to the rocket's projected position */}
       {!launching && (
-        <>
-          <button
-            onClick={launch}
-            aria-label="Launch rocket — scroll back to top"
-            className={`group absolute right-[4%] top-[16%] z-20 hidden h-56 w-44 lg:block transition-opacity duration-500 ${
-              nearTop && !nearBottom ? 'opacity-100' : 'pointer-events-none opacity-0'
-            }`}
-          >
-            <span className="absolute inset-x-6 bottom-2 mx-auto block h-8 rounded-full bg-glow-cyan/0 blur-md transition-all duration-500 group-hover:bg-glow-cyan/25" />
-          </button>
-          <button
-            onClick={launch}
-            aria-label="Launch rocket — scroll back to top"
-            className={`group absolute bottom-[30vh] left-1/2 z-20 h-64 w-40 -translate-x-1/2 sm:h-72 sm:w-48 transition-opacity duration-500 ${
-              nearBottom ? 'opacity-100' : 'pointer-events-none opacity-0'
-            }`}
-          >
-            <span className="absolute inset-x-4 bottom-4 mx-auto block h-10 rounded-full bg-glow-amber/0 blur-lg transition-all duration-500 group-hover:bg-glow-amber/30" />
-          </button>
-        </>
+        <button
+          ref={btnRef}
+          onClick={launch}
+          aria-label="Launch rocket — scroll back to top"
+          className="group fixed left-0 top-0 z-[35] h-64 w-44 cursor-pointer opacity-0 transition-opacity duration-300"
+        >
+          {/* subtle pulsing ring so users can tell it's interactive */}
+          <span className="absolute bottom-2 left-1/2 h-14 w-28 -translate-x-1/2 rounded-[50%] border border-glow-amber/40 shadow-glow-cyan/20 transition-all duration-500 group-hover:border-glow-amber group-hover:shadow-[0_0_30px_rgba(255,180,84,0.35)]" />
+        </button>
       )}
     </>
   )

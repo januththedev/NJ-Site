@@ -1,5 +1,3 @@
-import { useScramble } from '../../hooks/useScramble'
-
 interface Props {
   eyebrow?: string
   title: string
@@ -7,9 +5,8 @@ interface Props {
   className?: string
 }
 
-/** Section header whose title scrambles through hex/ASCII glyphs as it scrolls into view. */
+/** Section header with staggered fade-up reveal (scroll-triggered). */
 export default function SectionHeading({ eyebrow, title, align = 'center', className = '' }: Props) {
-  const ref = useScramble<HTMLSpanElement>()
   return (
     <div className={`mb-12 ${align === 'center' ? 'text-center' : 'text-left'} ${className}`}>
       {eyebrow && (
@@ -18,7 +15,7 @@ export default function SectionHeading({ eyebrow, title, align = 'center', class
         </p>
       )}
       <h2 className="font-display text-balance text-3xl font-bold text-white sm:text-4xl lg:text-[2.75rem]" data-anim>
-        <span ref={ref}>{title}</span>
+        {title}
       </h2>
       <div className={`hairline mt-6 max-w-xs ${align === 'center' ? 'mx-auto' : ''}`} />
     </div>

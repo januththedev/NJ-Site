@@ -69,7 +69,6 @@ function makeMoonGeometry() {
 }
 
 /* ── Particles: engine flames + launch smoke / moondust (additive points) ── */
-const FLAME_COUNT = 320
 const SMOKE_COUNT = 260
 
 function makeParticleSystem(count: number, size: number, opacity: number) {
@@ -111,8 +110,53 @@ function spawnParticle(
   sys.life[i] = 1
 }
 
+/* ── Realistic exhaust plume (shader) ──
+ * Layered per real rocket physics: white-hot core at the nozzle, periodic
+ * shock-diamond hotspots after the zone of silence, orange → deep-red
+ * turbulent tail that dissipates downstream. Diamonds only exist in an
+ * atmosphere — uDiamonds fades them out for vacuum burns. */
+const flameVert = /* glsl */ `
+  varying vec2 vUv;
+  uniform float uTime;
+  void main() {
+    vUv = uv;
+    vec3 p = position;
+    float a = 1.0 - uv.y; // 0 at nozzle → 1 at tail
+    float sway = sin(uTime * 21.0 + uv.x * 18.0) * 0.5 + cos(uTime * 16.0 + uv.x * 13.0) * 0.5;
+    p.x += sway * 0.05 * a * a;
+    p.z += cos(uTime * 17.0 + uv.x * 15.0) * 0.04 * a * a;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+  }
+`
+const flameFrag = /* glsl */ `
+  varying vec2 vUv;
+  uniform float uTime;
+  uniform float uThrust;
+  uniform float uDiamonds;
+  float hash(float n) { return fract(sin(n) * 43758.5453123); }
+  float noise1(float x) { float i = floor(x), f = fract(x); return mix(hash(i), hash(i + 1.0), f * f * (3.0 - 2.0 * f)); }
+  void main() {
+    float a = clamp(1.0 - vUv.y, 0.0, 1.0);          // 0 nozzle → 1 tail
+    float flick = 0.8 + 0.45 * noise1(a * 7.0 - uTime * 13.0);
+    // shock diamonds: periodic hotspots after the zone of silence
+    float dia = pow(abs(sin(max(a - 0.10, 0.0) * 24.0)), 6.0) * exp(-a * 4.5) * uDiamonds;
+    vec3 col = mix(vec3(1.0), vec3(0.72, 0.88, 1.0), smoothstep(0.02, 0.22, a));
+    col = mix(col, vec3(1.0, 0.58, 0.18), smoothstep(0.18, 0.55, a));
+    col = mix(col, vec3(0.85, 0.22, 0.06), smoothstep(0.60, 0.95, a));
+    float inten = (exp(-a * 2.1) * 1.5 + dia * 2.4) * flick * uThrust;
+    float fade = smoothstep(1.0, 0.68, a);
+    gl_FragColor = vec4(col * inten, fade * uThrust);
+  }
+`
+
 /* ── The full rocket journey scene ── */
-export default function RocketScene({ onFlightEnd }: { onFlightEnd: () => void }) {
+export default function RocketScene({
+  onFlightEnd,
+  screenRef,
+}: {
+  onFlightEnd: () => void
+  screenRef: React.MutableRefObject<{ x: number; y: number; visible: boolean }>
+}) {
   const { scene } = useGLTF('/models/rocket.glb')
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera
 
@@ -128,9 +172,27 @@ export default function RocketScene({ onFlightEnd }: { onFlightEnd: () => void }
   const glowMat = useRef<THREE.MeshStandardMaterial | null>(null)
   const beaconMat = useRef<THREE.MeshStandardMaterial | null>(null)
 
-  const flame = useMemo(() => makeParticleSystem(FLAME_COUNT, 0.55, 0.95), [])
+  const plumeGeo = useMemo(() => new THREE.CylinderGeometry(0.075, 0.46, 2.3, 20, 24, true), [])
+  const plumeMat = useMemo(
+    () =>
+      new THREE.ShaderMaterial({
+        vertexShader: flameVert,
+        fragmentShader: flameFrag,
+        uniforms: {
+          uTime: { value: 0 },
+          uThrust: { value: 0 },
+          uDiamonds: { value: 1 },
+        },
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+      }),
+    [],
+  )
+  const diamondsRef = useRef(1)
+
   const smoke = useMemo(() => makeParticleSystem(SMOKE_COUNT, 2.6, 0.32), [])
-  const flameRef = useRef<THREE.Points>(null)
   const smokeRef = useRef<THREE.Points>(null)
 
   const moonGeo = useMemo(makeMoonGeometry, [])
@@ -150,10 +212,15 @@ export default function RocketScene({ onFlightEnd }: { onFlightEnd: () => void }
     return () => mq.removeEventListener('change', fn)
   }, [])
 
-  // collect named parts from the GLB
+  // collect named parts from the GLB; hang the exhaust plume off the rocket
   useMemo(() => {
     scene.traverse((o) => {
       if (o.name === 'EngineGlow') glowMat.current = (o as THREE.Mesh).material as THREE.MeshStandardMaterial
+      if (o.name === 'Rocket') {
+        const plume = new THREE.Mesh(plumeGeo, plumeMat)
+        plume.position.y = -0.48 // just below the nozzle bell
+        ;(o as THREE.Group).add(plume)
+      }
       const tower = o.name === 'Tower' && (o as THREE.Group).children
       if (tower) {
         const beacon = tower[tower.length - 1] as THREE.Mesh
@@ -161,7 +228,7 @@ export default function RocketScene({ onFlightEnd }: { onFlightEnd: () => void }
       }
     })
     return scene
-  }, [scene])
+  }, [scene, plumeGeo, plumeMat])
 
   // camera rig bound to document scroll
   useEffect(() => {
@@ -236,6 +303,7 @@ export default function RocketScene({ onFlightEnd }: { onFlightEnd: () => void }
   const camTarget = useMemo(() => new THREE.Vector3(), [])
   const lookTarget = useMemo(() => new THREE.Vector3(), [])
   const nozzleWorld = useMemo(() => new THREE.Vector3(), [])
+  const _proj = useMemo(() => new THREE.Vector3(), [])
   const lastWall = useRef(performance.now())
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
@@ -303,43 +371,50 @@ export default function RocketScene({ onFlightEnd }: { onFlightEnd: () => void }
     camera.position.lerp(camTarget, 1 - Math.exp(-dtReal * 4.5))
     camera.lookAt(lookTarget)
 
-    // particles
-    if (thrustRef.current > 0.02) {
-      nozzleWorld.set((Math.random() - 0.5) * 0.16 * shrinkRef.current.s, riseRef.current - 0.42, (Math.random() - 0.5) * 0.16 * shrinkRef.current.s)
-      const n = Math.ceil(thrustRef.current * 14)
-      for (let i = 0; i < n; i++) spawnParticle(flame, nozzleWorld, 0.24, 1)
-      if (riseRef.current < 3.2 || landing) {
-        for (let i = 0; i < 4; i++) spawnParticle(smoke, nozzleWorld, 1.6, 0.28, landing ? 3.2 : 2.2)
-      }
+    // exhaust plume shader clocks — shock diamonds fade out in vacuum burns
+    if (plumeMat.uniforms.uTime) plumeMat.uniforms.uTime.value = t
+    const diaTarget = landing ? 0 : 1
+    diamondsRef.current += (diaTarget - diamondsRef.current) * Math.min(1, dtReal * 2.5)
+    if (plumeMat.uniforms.uDiamonds) plumeMat.uniforms.uDiamonds.value = diamondsRef.current * Math.min(1, thrustRef.current * 1.2)
+    if (plumeMat.uniforms.uThrust) plumeMat.uniforms.uThrust.value = thrustRef.current
+
+    // pad / touchdown smoke only — fire itself is drawn by the plume shader
+    if (thrustRef.current > 0.02 && (riseRef.current < 6 || landing)) {
+      nozzleWorld.set(
+        (Math.random() - 0.5) * 0.16 * shrinkRef.current.s,
+        riseRef.current - 0.42,
+        (Math.random() - 0.5) * 0.16 * shrinkRef.current.s,
+      )
+      for (let i = 0; i < 4; i++) spawnParticle(smoke, nozzleWorld, 1.8, 0.26, landing ? 4.5 : 2.2)
     }
     const fadeColor = new THREE.Color()
-    const step = (sys: typeof flame, decay: number, smokeMode: boolean) => {
-      for (let i = 0; i < sys.count; i++) {
-        if (sys.life[i] <= 0) continue
-        sys.life[i] -= dt * decay
-        sys.positions[i * 3] += sys.vel[i * 3] * dt
-        sys.positions[i * 3 + 1] += sys.vel[i * 3 + 1] * dt * (smokeMode ? 0.4 : 1)
-        sys.positions[i * 3 + 2] += sys.vel[i * 3 + 2] * dt
-        const l = Math.max(sys.life[i], 0)
-        if (smokeMode) fadeColor.setRGB(0.5, 0.52, 0.58).multiplyScalar(l * 0.55)
-        else fadeColor.setRGB(1, 0.55 + l * 0.45, 0.15 + l * 0.6).multiplyScalar(l * l)
-        sys.colors.set([fadeColor.r, fadeColor.g, fadeColor.b], i * 3)
-        if (sys.life[i] <= 0) sys.positions[i * 3 + 1] = 9999
-      }
-    }
-    step(flame, 2.4, false)
-    step(smoke, 0.55, true)
-    if (flameRef.current) {
-      flameRef.current.geometry.attributes.position.needsUpdate = true
-      flameRef.current.geometry.attributes.color.needsUpdate = true
+    for (let i = 0; i < smoke.count; i++) {
+      if (smoke.life[i] <= 0) continue
+      smoke.life[i] -= dt * 0.55
+      smoke.positions[i * 3] += (smoke.vel[i * 3] + Math.sin(t + i) * 0.4) * dt
+      smoke.positions[i * 3 + 1] += smoke.vel[i * 3 + 1] * dt * 0.4
+      smoke.positions[i * 3 + 2] += smoke.vel[i * 3 + 2] * dt
+      const l = Math.max(smoke.life[i], 0)
+      fadeColor.setRGB(0.5, 0.52, 0.58).multiplyScalar(l * 0.55)
+      smoke.colors.set([fadeColor.r, fadeColor.g, fadeColor.b], i * 3)
+      if (smoke.life[i] <= 0) smoke.positions[i * 3 + 1] = 9999
     }
     if (smokeRef.current) {
       smokeRef.current.geometry.attributes.position.needsUpdate = true
       smokeRef.current.geometry.attributes.color.needsUpdate = true
     }
-  })
 
-  // moon slides up from below into its landing spot as moonT → 1
+    // project the rocket's anchor to screen space for the click button
+    if (screenRef.current) {
+      _proj.set(0, riseRef.current + 2.2 * shrinkRef.current.s, 0).project(camera)
+      const sx = (_proj.x * 0.5 + 0.5) * window.innerWidth
+      const sy = (-_proj.y * 0.5 + 0.5) * window.innerHeight
+      screenRef.current.x = sx
+      screenRef.current.y = sy
+      screenRef.current.visible =
+        _proj.z < 1 && sx > -80 && sx < window.innerWidth + 80 && sy > -100 && sy < window.innerHeight + 160
+    }
+  })
 
   return (
     <>
@@ -380,7 +455,6 @@ export default function RocketScene({ onFlightEnd }: { onFlightEnd: () => void }
         </mesh>
       </group>
 
-      <points ref={flameRef} geometry={flame.geo} material={flame.mat} frustumCulled={false} />
       <points ref={smokeRef} geometry={smoke.geo} material={smoke.mat} frustumCulled={false} />
     </>
   )
