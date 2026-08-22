@@ -5,7 +5,6 @@ import { ContactShadows } from '@react-three/drei'
 import ModelStage from '../components/three/ModelStage'
 import OpenBook from '../components/three/OpenBook'
 import ExamPaper from '../components/three/ExamPaper'
-import VernierCaliper from '../components/three/VernierCaliper'
 import LankaMap from '../components/three/LankaMap'
 import SpotlightCard from '../components/ui/SpotlightCard'
 
@@ -186,28 +185,18 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Practical sessions — Vernier caliper fly-in ────────────── */}
+      {/* ── Practical sessions ────────────────────────────────────── */}
       <section id="practicals" className="relative mt-20 overflow-hidden border-y border-white/5 bg-gradient-to-b from-night-900/40 to-transparent py-12 sm:py-16 lg:mt-32 lg:py-20">
-        <div className="container-x grid items-center gap-8 sm:gap-10 lg:grid-cols-2">
-          <div className="order-2 h-[320px] sm:h-[380px] lg:order-1">
-            <div className="glass h-full rounded-[2rem] p-3">
-              <ModelStage cameraPosition={[0, 0.5, 5.2]} fov={44} ariaLabel="Vernier caliper measuring a brass specimen">
-                <ambientLight intensity={0.7} />
-                <directionalLight position={[3, 5, 4]} intensity={1.3} />
-                <pointLight position={[-4, 1, 2]} intensity={12} color="#38e8ff" distance={12} />
-                <VernierCaliper animate />
-              </ModelStage>
-            </div>
-          </div>
-          <div className="order-1 text-center lg:order-2 lg:text-left" data-rise>
+        <div className="container-x" data-rise>
+          <div className="mx-auto max-w-2xl text-center">
             <p className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.3em] text-glow-violet">
               <FlaskConical className="h-3.5 w-3.5" /> {practicalsBand.kicker}
             </p>
             <h2 className="font-display text-balance text-4xl font-bold leading-tight text-white sm:text-5xl">
               Come, let&apos;s learn physics with <span className="text-gradient">practicals.</span>
             </h2>
-            <p className="mx-auto mt-5 max-w-lg leading-relaxed text-slate-400 lg:mx-0">{practicalsBand.body}</p>
-            <div className="mt-8 flex justify-center lg:justify-start">
+            <p className="mx-auto mt-5 max-w-lg leading-relaxed text-slate-400">{practicalsBand.body}</p>
+            <div className="mt-8 flex justify-center">
               <MagneticButton to="/helping-hand">
                 Explore Sessions <ArrowRight className="h-4 w-4" />
               </MagneticButton>
