@@ -221,7 +221,7 @@ export default function Home() {
         <SectionHeading eyebrow={coverage.kicker} title={`${exams.centres.length} exam halls across the island.`} />
         <p className="mx-auto -mt-6 mb-10 max-w-xl text-center text-slate-400">{coverage.body}</p>
         <div className="glass mx-auto max-w-3xl rounded-[2rem] p-4" data-rise>
-          <ModelStage height="440px" cameraPosition={[0, 2.7, 5.6]} fov={40} ariaLabel="3D map of Sri Lanka with 27 glowing exam hall pins">
+          <ModelStage height="460px" cameraPosition={[0, 2.2, 23]} fov={38} ariaLabel="3D map of Sri Lanka with 27 glowing exam hall pins">
             <ambientLight intensity={0.7} />
             <directionalLight position={[4, 7, 5]} intensity={1.4} color="#cfe4ff" />
             <pointLight position={[-4, 3, 3]} intensity={20} color="#38e8ff" distance={16} />

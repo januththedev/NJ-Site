@@ -53,7 +53,7 @@ export default function LankaMap() {
             if (m) pins.current[i] = m as THREE.Mesh
           }}
         >
-          <sphereGeometry args={[0.055, 12, 10]} />
+          <sphereGeometry args={[0.095, 12, 10]} />
           <meshStandardMaterial color="#7df3ff" emissive="#38e8ff" emissiveIntensity={2} toneMapped={false} />
         </mesh>
       ))}
