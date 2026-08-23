@@ -71,6 +71,23 @@ function makeMoonGeometry() {
 /* ── Particles: engine flames + launch smoke / moondust (additive points) ── */
 const SMOKE_COUNT = 260
 
+let puffTexture: THREE.Texture | null = null
+function getPuffTexture() {
+  if (!puffTexture) {
+    const c = document.createElement('canvas')
+    c.width = c.height = 64
+    const ctx = c.getContext('2d')!
+    const grad = ctx.createRadialGradient(32, 32, 2, 32, 32, 30)
+    grad.addColorStop(0, 'rgba(255,255,255,1)')
+    grad.addColorStop(0.55, 'rgba(255,255,255,0.45)')
+    grad.addColorStop(1, 'rgba(255,255,255,0)')
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, 64, 64)
+    puffTexture = new THREE.CanvasTexture(c)
+  }
+  return puffTexture
+}
+
 function makeParticleSystem(count: number, size: number, opacity: number) {
   const positions = new Float32Array(count * 3)
   const colors = new Float32Array(count * 3)
@@ -82,6 +99,7 @@ function makeParticleSystem(count: number, size: number, opacity: number) {
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
   const mat = new THREE.PointsMaterial({
     size,
+    map: getPuffTexture(),
     vertexColors: true,
     transparent: true,
     opacity,
@@ -139,28 +157,35 @@ const flameFrag = /* glsl */ `
     float a = clamp(1.0 - vUv.y, 0.0, 1.0);          // 0 nozzle → 1 tail
     float flick = 0.8 + 0.45 * noise1(a * 7.0 - uTime * 13.0);
     // shock diamonds: periodic hotspots after the zone of silence
-    float dia = pow(abs(sin(max(a - 0.10, 0.0) * 24.0)), 6.0) * exp(-a * 4.5) * uDiamonds;
+    float dia = pow(abs(sin(max(a - 0.10, 0.0) * 24.0)), 8.0) * exp(-a * 5.0) * uDiamonds;
     vec3 col = mix(vec3(1.0), vec3(0.72, 0.88, 1.0), smoothstep(0.02, 0.22, a));
     col = mix(col, vec3(1.0, 0.58, 0.18), smoothstep(0.18, 0.55, a));
     col = mix(col, vec3(0.85, 0.22, 0.06), smoothstep(0.60, 0.95, a));
-    float inten = (exp(-a * 2.1) * 1.5 + dia * 2.4) * flick * uThrust;
-    float fade = smoothstep(1.0, 0.68, a);
-    gl_FragColor = vec4(col * inten, fade * uThrust);
+    float inten = exp(-a * 2.6) * 0.85 + dia * 1.9;
+    float edgeFade = smoothstep(1.0, 0.55, a);
+    gl_FragColor = vec4(col * inten * flick * uThrust, edgeFade * uThrust * 0.85);
   }
 `
 
 /* ── The full rocket journey scene ── */
 export default function RocketScene({
   onFlightEnd,
+  onFinaleFade,
   screenRef,
 }: {
   onFlightEnd: () => void
+  onFinaleFade: () => void
   screenRef: React.MutableRefObject<{ x: number; y: number; visible: boolean }>
 }) {
   const { scene } = useGLTF('/models/rocket.glb')
   const camera = useThree((s) => s.camera) as THREE.PerspectiveCamera
 
+  // Portrait viewports see the same world height (fixed vertical FOV) in a
+  // much narrower frame — chase distance and finale layout adapt to it.
+  const portrait = typeof window !== 'undefined' && window.innerHeight > window.innerWidth
+
   const group = useRef<THREE.Group>(null)
+  const rocketInner = useRef<THREE.Group | null>(null) // ONLY the rocket moves — pad & tower stay on Earth
   const progressRef = useRef(0)
   const thrustRef = useRef(0)
   const riseRef = useRef(0)
@@ -172,7 +197,23 @@ export default function RocketScene({
   const glowMat = useRef<THREE.MeshStandardMaterial | null>(null)
   const beaconMat = useRef<THREE.MeshStandardMaterial | null>(null)
 
-  const plumeGeo = useMemo(() => new THREE.CylinderGeometry(0.075, 0.46, 2.3, 20, 24, true), [])
+  // Finale layout: a SMALL moon parked in the top-right of the viewport with
+  // the page still visible behind it — the rocket shrinks and lands on it.
+  // Offsets are tuned against the frozen chase-camera pose (0, ~42.6, D)
+  // looking level, so the moon projects to roughly 12% of screen height.
+  const CHASE_D = portrait ? 21 : 16.5
+  // Projected against the frozen chase pose so the moon sits in the empty
+  // top-right corner, clear of the hero headline, at ~13% of screen height.
+  // On phones it is smaller and higher — the hero headline reaches further
+  // up the frame there — tucking behind the translucent intro badge.
+  const MOON_SCALE = portrait ? 0.8 : 1
+  const MOON_FINAL = { x: portrait ? 8.3 : 22.5, y: portrait ? 61.5 : 55.5, z: -44 }
+  // where the rocket touches down (moon top surface ≈ center + R·scale·1.02)
+  const LAND = { x: MOON_FINAL.x, y: MOON_FINAL.y + 3.27 * MOON_SCALE, z: MOON_FINAL.z }
+  // phones shrink the rocket a touch more so its nose stays below the navbar
+  const LAND_SHRINK = portrait ? 0.28 : 0.34
+
+  const plumeGeo = useMemo(() => new THREE.CylinderGeometry(0.075, 0.30, 1.7, 20, 24, true), [])
   const plumeMat = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -192,18 +233,18 @@ export default function RocketScene({
   )
   const diamondsRef = useRef(1)
 
-  const smoke = useMemo(() => makeParticleSystem(SMOKE_COUNT, 2.6, 0.32), [])
+  const smoke = useMemo(() => makeParticleSystem(SMOKE_COUNT, 1.35, 0.5), [])
   const smokeRef = useRef<THREE.Points>(null)
 
   const moonGeo = useMemo(makeMoonGeometry, [])
   const moonGroup = useRef<THREE.Group>(null)
-  const MOON_R = 3.2
-  const MOON_FINAL = { y: 37.15, z: -5 } // top surface sits just under the descended rocket
 
   const [isNight, setIsNight] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches,
   )
-  const [spaceMode, setSpaceMode] = useState(false) // deep-space backdrop for the finale
+  // The page itself is the backdrop during the whole flight — stars would
+  // paint over the scrolling content, so they take a break while airborne.
+  const [hideStars, setHideStars] = useState(false)
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -217,6 +258,7 @@ export default function RocketScene({
     scene.traverse((o) => {
       if (o.name === 'EngineGlow') glowMat.current = (o as THREE.Mesh).material as THREE.MeshStandardMaterial
       if (o.name === 'Rocket') {
+        rocketInner.current = o as THREE.Group
         const plume = new THREE.Mesh(plumeGeo, plumeMat)
         plume.position.y = -0.48 // just below the nozzle bell
         ;(o as THREE.Group).add(plume)
@@ -247,7 +289,7 @@ export default function RocketScene({
 
   // imperative blast-off — invoked via window.__startFlight from RocketCanvas
   const startFlight = () => {
-    if (flyingRef.current) return
+    if (flyingRef.current || !rocketInner.current) return
     flyingRef.current = true
     const tl = gsap.timeline({
       onComplete: () => {
@@ -258,38 +300,44 @@ export default function RocketScene({
         moonT.current.t = 0
         landingRef.current = false
         flyingRef.current = false
-        setSpaceMode(false)
+        setHideStars(false)
+        rocketInner.current!.position.set(0, 0, 0)
         ;(window as unknown as Record<string, unknown>).__flightActive = false
         onFlightEnd()
       },
     })
 
     // Phase A — ascent (page scrolls back to the top over these 5 seconds)
-    tl.to(thrustRef, { current: 1, duration: 0.45 }, 0)
+    tl.call(() => setHideStars(true), [], 0)
+      .to(thrustRef, { current: 1, duration: 0.45 }, 0)
       .to(shakeRef, { current: 1, duration: 0.3 }, 0)
       .to(shakeRef, { current: 0.25, duration: 1.2 }, 0.8)
       .to(riseRef, { current: 40, duration: 4.6, ease: 'power2.in' }, 0.35)
       .to(thrustRef, { current: 0.65, duration: 1.4 }, 3.2)
+      // destination moon eases into its corner spot right as we lift off
+      .to(moonT.current, { t: 1, duration: 2.2, ease: 'power2.out' }, 0.4)
 
-    // Phase B — the moon finale: shrink away and land on the lunar surface
+    // Phase B — the finale: shrink away, arc across, and land on the small
+    // corner moon while the page stays visible behind everything
     tl.call(() => {
       landingRef.current = true
-      setSpaceMode(true)
     }, [], 4.85)
-      .to(moonT, { t: 1, duration: 1.5, ease: 'power2.out' }, 4.9)
-      .to(shrinkRef.current, { s: 0.22, duration: 1.9, ease: 'power2.inOut' }, 5.0)
-      .to(riseRef, { current: 41.0, duration: 1.9, ease: 'power1.inOut' }, 5.0) // descend onto the surface
+      .to(shrinkRef.current, { s: LAND_SHRINK, duration: 1.9, ease: 'power2.inOut' }, 5.0)
+      // retro-burn descent: drift toward the moon and settle onto its surface
+      .to(rocketInner.current!.position, { x: LAND.x, y: LAND.y, z: LAND.z, duration: 1.9, ease: 'power2.out' }, 5.0)
       .call(
         () => {
-          // touchdown dust burst
-          const impact = new THREE.Vector3(0, riseRef.current - 0.42, 0)
+          // touchdown dust burst radiating along the surface
+          const impact = new THREE.Vector3(LAND.x, LAND.y - 0.42 * shrinkRef.current.s, LAND.z)
           for (let i = 0; i < 90; i++) spawnParticle(smoke, impact, 2.4, -0.22, 5.5)
         },
         [],
         6.75,
       )
       .to(thrustRef, { current: 0, duration: 0.25 }, 6.75)
-      .to({}, { duration: 0.75 }) // hold the landed shot
+      .to(shakeRef, { current: 0, duration: 0.3 }, 6.75)
+      .call(() => onFinaleFade(), [], 7.35) // fade the canvas out while parked
+      .to({}, { duration: 1.4 }) // hold through the fade
   }
 
   useEffect(() => {
@@ -317,46 +365,40 @@ export default function RocketScene({
     const flying = flyingRef.current
     const landing = landingRef.current
 
-    // rocket lifts off / shrinks for the finale
-    if (group.current) {
-      group.current.position.y = riseRef.current
-      group.current.scale.setScalar(shrinkRef.current.s)
-    }
-
-    // moon slides up into the frame as the finale begins
-    if (moonGroup.current) {
-      const mt = moonT.current.t
-      moonGroup.current.visible = landing || mt > 0.001
-      if (moonGroup.current.visible) {
-        const eased = mt * mt * (3 - 2 * mt)
-        moonGroup.current.position.set(0, THREE.MathUtils.lerp(-60, MOON_FINAL.y, eased), MOON_FINAL.z)
+    // rocket lifts off / shrinks for the finale — pad & tower stay on Earth
+    if (rocketInner.current) {
+      rocketInner.current.scale.setScalar(shrinkRef.current.s)
+      if (!landingRef.current) {
+        rocketInner.current.position.y = riseRef.current
+        rocketInner.current.position.x = 0
+        rocketInner.current.position.z = 0
       }
     }
 
-    ;(window as unknown as Record<string, unknown>).__flight = {
-      flying,
-      landing,
-      rise: Math.round(riseRef.current),
-      thrust: Number(thrustRef.current.toFixed(2)),
-      camY: Math.round(camera.position.y),
-      scale: Number(shrinkRef.current.s.toFixed(2)),
-      branch: flying ? (landing ? 'landing' : 'ascent') : 'scroll',
+    // moon grows in at its corner spot — sliding up from below would sweep it
+    // across the hero text while the page scrolls behind it
+    if (moonGroup.current) {
+      const mt = moonT.current.t
+      moonGroup.current.visible = mt > 0.001
+      if (moonGroup.current.visible) {
+        const eased = mt * mt * (3 - 2 * mt)
+        moonGroup.current.position.set(MOON_FINAL.x, MOON_FINAL.y, MOON_FINAL.z)
+        moonGroup.current.scale.setScalar(Math.max(eased, 0.001) * MOON_SCALE)
+      }
     }
 
     if (glowMat.current) glowMat.current.emissiveIntensity = 1.6 + Math.sin(t * 2.2) * 0.5 + thrustRef.current * 5
     if (beaconMat.current) beaconMat.current.emissiveIntensity = 1.2 + (Math.sin(t * 3.4) > 0.55 ? 2.2 : 0)
 
-    if (flying && landing) {
-      // finale framing: wide shot, shrunken rocket parked on the moon
-      camTarget.set(0, 39.8 + Math.sin(t * 0.8) * 0.15, 27)
-      lookTarget.set(0, 39.4, -MOON_R * 1.4)
-    } else if (flying) {
+    if (flying) {
+      // One chase pose for the whole flight — ascent AND the corner-moon
+      // landing — so the camera never swings and the page stays the backdrop.
       camTarget.set(
         Math.sin(t * 30) * 0.12 * shakeRef.current,
         riseRef.current + 2.6 + Math.sin(t * 26) * 0.08 * shakeRef.current,
-        11.5,
+        CHASE_D,
       )
-      lookTarget.set(0, riseRef.current + 2.4, 0)
+      lookTarget.set(0, riseRef.current + (portrait ? 3.3 : 2.4), 0)
     } else {
       const p = reduced ? 0.85 : progressRef.current
       const c = THREE.MathUtils.smoothstep(p, 0.62, 1)
@@ -379,11 +421,17 @@ export default function RocketScene({
     if (plumeMat.uniforms.uThrust) plumeMat.uniforms.uThrust.value = thrustRef.current
 
     // pad / touchdown smoke only — fire itself is drawn by the plume shader
-    if (thrustRef.current > 0.02 && (riseRef.current < 6 || landing)) {
+    // exhaust smoke only where it reads: pad billow at liftoff and the final
+    // approach to the moon — mid-transit puffs just blob over the page text
+    const rp = rocketInner.current?.position
+    const nearMoon =
+      landing && !!rp && Math.hypot(rp.x - LAND.x, rp.y - LAND.y, rp.z - LAND.z) < 10
+    if (thrustRef.current > 0.02 && (riseRef.current < 6 || nearMoon)) {
+      // anchor to the rocket's live position (it drifts toward the moon in the finale)
       nozzleWorld.set(
-        (Math.random() - 0.5) * 0.16 * shrinkRef.current.s,
-        riseRef.current - 0.42,
-        (Math.random() - 0.5) * 0.16 * shrinkRef.current.s,
+        (rp?.x ?? 0) + (Math.random() - 0.5) * 0.16 * shrinkRef.current.s,
+        (rp?.y ?? riseRef.current) - 0.42,
+        (rp?.z ?? 0) + (Math.random() - 0.5) * 0.16 * shrinkRef.current.s,
       )
       for (let i = 0; i < 4; i++) spawnParticle(smoke, nozzleWorld, 1.8, 0.26, landing ? 4.5 : 2.2)
     }
@@ -405,8 +453,9 @@ export default function RocketScene({
     }
 
     // project the rocket's anchor to screen space for the click button
-    if (screenRef.current) {
-      _proj.set(0, riseRef.current + 2.2 * shrinkRef.current.s, 0).project(camera)
+    if (screenRef.current && rocketInner.current) {
+      const rp = rocketInner.current.position
+      _proj.set(rp.x, rp.y + 2.2 * shrinkRef.current.s, rp.z).project(camera)
       const sx = (_proj.x * 0.5 + 0.5) * window.innerWidth
       const sy = (-_proj.y * 0.5 + 0.5) * window.innerHeight
       screenRef.current.x = sx
@@ -418,17 +467,9 @@ export default function RocketScene({
 
   return (
     <>
-      {spaceMode ? (
-        // Finale backdrop: deep space, whatever the system theme is
+      {isNight ? (
         <>
-          <color attach="background" args={['#04050d']} />
-          <Stars radius={110} depth={60} count={2600} factor={4.2} saturation={0} fade speed={0.4} />
-          <ambientLight intensity={0.5} />
-          <directionalLight position={[-14, 18, 12]} intensity={1.6} color="#e8ecff" />
-        </>
-      ) : isNight ? (
-        <>
-          <Stars radius={110} depth={60} count={2600} factor={4.2} saturation={0} fade speed={0.6} />
+          {!hideStars && <Stars radius={110} depth={60} count={2600} factor={4.2} saturation={0} fade speed={0.6} />}
           <ambientLight intensity={0.32} />
           <directionalLight position={[-18, 22, 10]} intensity={0.85} color="#9db8ff" />
           <pointLight position={[6, 4, 8]} intensity={40} color="#38e8ff" distance={40} />
@@ -443,7 +484,7 @@ export default function RocketScene({
         </>
       )}
 
-      {!spaceMode && <Terrain />}
+      <Terrain />
       <group ref={group}>
         <primitive object={scene} />
       </group>

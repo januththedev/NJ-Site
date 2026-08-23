@@ -13,7 +13,7 @@ const TikTok = (props: React.SVGProps<SVGSVGElement>) => (
  */
 export default function Footer() {
   return (
-    <footer className="relative z-10 mt-10 border-t border-white/10 bg-night-900/55 pb-8 pt-14">
+    <footer className="relative z-10 mt-10 border-t border-white/10 bg-night-900/30 pb-8 pt-14">
       <div className="container-x grid items-center gap-12 md:grid-cols-[1fr_minmax(180px,0.9fr)_1fr]">
         {/* Contact — left */}
         <div>

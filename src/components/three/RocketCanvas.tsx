@@ -9,15 +9,18 @@ type FlightWindow = Window & { __startFlight?: () => void; __flightActive?: bool
 
 /**
  * Fixed canvas hosting the scroll-journey rocket (HOME PAGE ONLY).
- * - Behind the UI (z-0) while browsing; dimmed mid-page; raised in FRONT of
- *   the footer (z-30) when the footer is in view; above everything (z-40)
- *   during the launch so the rocket stays center while content flies past.
+ * - Behind the UI (z-0) while browsing; dimmed mid-page; above everything
+ *   (z-40) during the launch so the rocket stays in front while the page
+ *   scrolls past underneath.
+ * - The canvas paints NO backdrop of its own during the flight — the page
+ *   scrolling underneath is the background.
  * - The launch button tracks the rocket's projected screen position every
  *   frame, so "click the rocket" works at any size, any scroll position.
  */
 export default function RocketCanvas() {
   const { pathname } = useLocation()
   const [launching, setLaunching] = useState(false)
+  const [fading, setFading] = useState(false)
   const [nearBottom, setNearBottom] = useState(false)
   const screenRef = useRef({ x: -999, y: -999, visible: false })
   const btnRef = useRef<HTMLButtonElement>(null)
@@ -50,7 +53,7 @@ export default function RocketCanvas() {
       const b = btnRef.current
       const s = screenRef.current
       if (b) {
-        const show = !launching && s.visible
+        const show = !launching && !fading && s.visible
         b.style.opacity = show ? '1' : '0'
         b.style.pointerEvents = show ? 'auto' : 'none'
         if (show || s.visible) b.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -86%)`
@@ -59,7 +62,7 @@ export default function RocketCanvas() {
     }
     raf = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(raf)
-  }, [launching])
+  }, [launching, fading])
 
   const launch = () => {
     const w = window as FlightWindow
@@ -98,7 +101,7 @@ export default function RocketCanvas() {
       <div
         aria-hidden
         className={`pointer-events-none fixed inset-0 transition-opacity duration-700 ${
-          launching ? 'z-40 opacity-100' : nearBottom ? 'z-30 opacity-100' : dimmed ? 'z-0 opacity-25' : 'z-0 opacity-100'
+          launching ? (fading ? 'z-40 opacity-0' : 'z-40 opacity-100') : dimmed ? 'z-0 opacity-25' : 'z-0 opacity-100'
         }`}
       >
         <Canvas
@@ -108,13 +111,20 @@ export default function RocketCanvas() {
           style={{ background: 'transparent' }}
         >
           <Suspense fallback={null}>
-            <RocketScene onFlightEnd={() => setLaunching(false)} screenRef={screenRef} />
+            <RocketScene
+              onFlightEnd={() => {
+                setLaunching(false)
+                setFading(false)
+              }}
+              onFinaleFade={() => setFading(true)}
+              screenRef={screenRef}
+            />
           </Suspense>
         </Canvas>
       </div>
 
       {/* Launch target glued to the rocket's projected position */}
-      {!launching && (
+      {!launching && !fading && (
         <button
           ref={btnRef}
           onClick={launch}
