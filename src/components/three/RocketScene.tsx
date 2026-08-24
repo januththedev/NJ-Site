@@ -194,6 +194,11 @@ export default function RocketScene({
   const flyingRef = useRef(false)
   const landingRef = useRef(false) // post-ascent moon approach phase
   const moonT = useRef({ t: 0 }) // 0 hidden → 1 parked under the rocket
+  const tiltRef = useRef(0) // bank into the approach, upright again by touchdown
+  const approachP = useRef({ p: 0 }) // bézier parameter for the curved descent
+  const approachCP = useRef<{ S: THREE.Vector3; C: THREE.Vector3 } | null>(null)
+  const moonSquash = useRef({ k: 0 }) // volume squash on the moon at touchdown
+  const baseRotZ = useRef(0) // GLB's own resting z-rotation, tilt is added on top
   const glowMat = useRef<THREE.MeshStandardMaterial | null>(null)
   const beaconMat = useRef<THREE.MeshStandardMaterial | null>(null)
 
@@ -203,15 +208,18 @@ export default function RocketScene({
   // looking level, so the moon projects to roughly 12% of screen height.
   const CHASE_D = portrait ? 21 : 16.5
   // Projected against the frozen chase pose so the moon sits in the empty
-  // top-right corner, clear of the hero headline, at ~13% of screen height.
-  // On phones it is smaller and higher — the hero headline reaches further
-  // up the frame there — tucking behind the translucent intro badge.
-  const MOON_SCALE = portrait ? 0.8 : 1
-  const MOON_FINAL = { x: portrait ? 8.3 : 22.5, y: portrait ? 61.5 : 55.5, z: -44 }
+  // top-right corner at ~13% of screen height. On phones it is smaller and
+  // shifted right so its left edge stays clear of the hero badge text, and
+  // higher so it clears the "Best Physics" headline below.
+  const MOON_SCALE = portrait ? 0.65 : 1
+  const MOON_FINAL = { x: portrait ? 9.5 : 22.5, y: portrait ? 61.5 : 55.5, z: -44 }
   // where the rocket touches down (moon top surface ≈ center + R·scale·1.02)
   const LAND = { x: MOON_FINAL.x, y: MOON_FINAL.y + 3.27 * MOON_SCALE, z: MOON_FINAL.z }
   // phones shrink the rocket a touch more so its nose stays below the navbar
   const LAND_SHRINK = portrait ? 0.28 : 0.34
+  // bank angle into the approach — shallower on phones, the narrow portrait
+  // FOV otherwise swings the nose off-screen mid-transit
+  const TILT_AMP = portrait ? 0.22 : 0.38
 
   const plumeGeo = useMemo(() => new THREE.CylinderGeometry(0.075, 0.30, 1.7, 20, 24, true), [])
   const plumeMat = useMemo(
@@ -259,6 +267,7 @@ export default function RocketScene({
       if (o.name === 'EngineGlow') glowMat.current = (o as THREE.Mesh).material as THREE.MeshStandardMaterial
       if (o.name === 'Rocket') {
         rocketInner.current = o as THREE.Group
+        baseRotZ.current = (o as THREE.Group).rotation.z
         const plume = new THREE.Mesh(plumeGeo, plumeMat)
         plume.position.y = -0.48 // just below the nozzle bell
         ;(o as THREE.Group).add(plume)
@@ -298,6 +307,10 @@ export default function RocketScene({
         shakeRef.current = 0
         shrinkRef.current.s = 1
         moonT.current.t = 0
+        tiltRef.current = 0
+        approachP.current.p = 0
+        approachCP.current = null
+        moonSquash.current.k = 0
         landingRef.current = false
         flyingRef.current = false
         setHideStars(false)
@@ -317,26 +330,63 @@ export default function RocketScene({
       // destination moon eases into its corner spot right as we lift off
       .to(moonT.current, { t: 1, duration: 2.2, ease: 'power2.out' }, 0.4)
 
-    // Phase B — the finale: shrink away, arc across, and land on the small
-    // corner moon while the page stays visible behind everything
+    // Phase B — the finale, flown like a real tail-sitter landing: bank into
+    // a curved approach, brighten the retro-burn, come upright, then settle
+    // onto the small corner moon while the page stays visible behind it.
     tl.call(() => {
       landingRef.current = true
-    }, [], 4.85)
-      .to(shrinkRef.current, { s: LAND_SHRINK, duration: 1.9, ease: 'power2.inOut' }, 5.0)
-      // retro-burn descent: drift toward the moon and settle onto its surface
-      .to(rocketInner.current!.position, { x: LAND.x, y: LAND.y, z: LAND.z, duration: 1.9, ease: 'power2.out' }, 5.0)
+      // capture the approach bézier once: S = where ascent left us, C pulls
+      // the path into a gentle arc that eases down onto the moon top
+      const S = rocketInner.current!.position.clone()
+      const C = new THREE.Vector3(
+        (S.x + LAND.x) / 2,
+        LAND.y + (portrait ? -2 : 3),
+        (S.z + LAND.z) / 2 + (portrait ? -1 : -3),
+      )
+      approachCP.current = { S, C }
+    }, [], 5.0)
+      .to(shrinkRef.current, { s: LAND_SHRINK, duration: 1.75, ease: 'power2.inOut' }, 5.0)
+      .to(tiltRef, { current: 1, duration: 0.5, ease: 'power2.out' }, 5.0) // bank toward the moon…
+      .to(tiltRef, { current: 0, duration: 0.75, ease: 'power2.inOut' }, 5.9) // …upright before touchdown
+      .to(thrustRef, { current: 0.95, duration: 0.9 }, 5.1) // retro-burn flares for the descent
+      .to(
+        approachP.current,
+        {
+          p: 1,
+          duration: 1.75,
+          ease: 'power2.out', // fast handoff from the ascent, easing to a soft arrival
+          onUpdate: () => {
+            const cp = approachCP.current
+            if (!cp || !rocketInner.current) return
+            const p = Math.min(Math.max(approachP.current.p, 0), 1)
+            const u = 1 - p
+            rocketInner.current.position.set(
+              u * u * cp.S.x + 2 * u * p * cp.C.x + p * p * LAND.x,
+              u * u * cp.S.y + 2 * u * p * cp.C.y + p * p * LAND.y,
+              u * u * cp.S.z + 2 * u * p * cp.C.z + p * p * LAND.z,
+            )
+          },
+        },
+        5.02,
+      )
       .call(
         () => {
-          // touchdown dust burst radiating along the surface
+          // touchdown: vacuum ejecta radiates ALONG the surface (no air to
+          // billow it), engine cuts, moon squashes and springs back
           const impact = new THREE.Vector3(LAND.x, LAND.y - 0.42 * shrinkRef.current.s, LAND.z)
-          for (let i = 0; i < 90; i++) spawnParticle(smoke, impact, 2.4, -0.22, 5.5)
+          for (let i = 0; i < 110; i++) spawnParticle(smoke, impact, 3.0, -0.13, 7)
         },
         [],
-        6.75,
+        6.77,
       )
-      .to(thrustRef, { current: 0, duration: 0.25 }, 6.75)
-      .to(shakeRef, { current: 0, duration: 0.3 }, 6.75)
-      .call(() => onFinaleFade(), [], 7.35) // fade the canvas out while parked
+      .to(thrustRef, { current: 0, duration: 0.22 }, 6.77)
+      .to(shakeRef, { current: 0, duration: 0.3 }, 6.77)
+      // suspension settle: compress on contact, then spring to rest
+      .to(rocketInner.current!.position, { y: LAND.y - 0.45 * MOON_SCALE, duration: 0.11, ease: 'power1.in' }, 6.78)
+      .to(rocketInner.current!.position, { y: LAND.y, duration: 0.55, ease: 'elastic.out(1.1, 0.33)' }, 6.89)
+      .to(moonSquash.current, { k: 0.07, duration: 0.1, ease: 'power2.out' }, 6.78)
+      .to(moonSquash.current, { k: 0, duration: 0.7, ease: 'elastic.out(1.4, 0.35)' }, 6.9)
+      .call(() => onFinaleFade(), [], 7.4) // fade the canvas out while parked
       .to({}, { duration: 1.4 }) // hold through the fade
   }
 
@@ -365,9 +415,11 @@ export default function RocketScene({
     const flying = flyingRef.current
     const landing = landingRef.current
 
-    // rocket lifts off / shrinks for the finale — pad & tower stay on Earth
+    // rocket lifts off / shrinks for the finale — pad & tower stay on Earth.
+    // tiltRef banks it into the approach and back upright for touchdown.
     if (rocketInner.current) {
       rocketInner.current.scale.setScalar(shrinkRef.current.s)
+      rocketInner.current.rotation.z = baseRotZ.current - tiltRef.current * TILT_AMP
       if (!landingRef.current) {
         rocketInner.current.position.y = riseRef.current
         rocketInner.current.position.x = 0
@@ -376,14 +428,17 @@ export default function RocketScene({
     }
 
     // moon grows in at its corner spot — sliding up from below would sweep it
-    // across the hero text while the page scrolls behind it
+    // across the hero text while the page scrolls behind it. moonSquash gives
+    // a volume-preserving compress-and-spring when the rocket touches down.
     if (moonGroup.current) {
       const mt = moonT.current.t
       moonGroup.current.visible = mt > 0.001
       if (moonGroup.current.visible) {
         const eased = mt * mt * (3 - 2 * mt)
+        const base = Math.max(eased, 0.001) * MOON_SCALE
+        const k = moonSquash.current.k
         moonGroup.current.position.set(MOON_FINAL.x, MOON_FINAL.y, MOON_FINAL.z)
-        moonGroup.current.scale.setScalar(Math.max(eased, 0.001) * MOON_SCALE)
+        moonGroup.current.scale.set(base * (1 + k * 0.8), Math.max(base * (1 - k), 0.001), base * (1 + k * 0.8))
       }
     }
 
