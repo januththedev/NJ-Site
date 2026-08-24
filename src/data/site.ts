@@ -1,16 +1,17 @@
+import content from '../content/site-content.json'
+
 export const site = {
   name: 'NJ Physics',
   teacher: 'Nilantha Jayasuriya',
   tagline: 'Advanced Level Physics for All Island',
-  footerTagline:
-    'යුගයේ අතිශ්‍රේෂ්ඨතම A/L භෞතික විද්‍යා ගුරුවරයා — NJ Physics සමඟ ඔබේ ජයග්‍රහණය තහවුරු කරගන්න.',
-  phone: '+94704 731 415',
-  phoneHref: 'tel:+94704731415',
+  footerTagline: content.site.footerTagline,
+  phone: content.site.phone,
+  phoneHref: content.site.phoneHref,
   hotline: '+94 33 221 8614',
-  email: 'callcentrenj@gmail.com',
+  email: content.site.email,
   altEmail: 'physicslk@gmail.com',
-  address: 'Gampaha, Sri Lanka',
-  hours: 'Mon - Sat: 07:00am - 06:00pm',
+  address: content.site.address,
+  hours: content.site.hours,
 } as const
 
 export const navLinks = [
@@ -33,10 +34,10 @@ export const footerLinks = [
 ] as const
 
 export const socials = {
-  facebook: 'https://www.facebook.com/njphysics/',
-  instagram: 'https://www.instagram.com/nj_physics?igsh=NHlnaGhnd2lwM284',
-  tiktok: 'https://www.tiktok.com/@nilanthajayasuriya2025?_t=ZS-8vLsxdYXp1G&_r=1',
-  youtube: 'https://www.youtube.com/@NilanthaJayasuriyaPhysics',
+  facebook: content.socials.facebook,
+  instagram: content.socials.instagram,
+  tiktok: content.socials.tiktok,
+  youtube: content.socials.youtube,
 } as const
 
 /** Protected student portals — hrefs must stay byte-for-byte identical. */

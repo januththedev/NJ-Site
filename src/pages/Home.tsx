@@ -127,13 +127,9 @@ export default function Home() {
         </div>
         <div data-rise>
           <SpotlightCard className="grid gap-6 p-8 sm:grid-cols-3 sm:p-10">
-            {[
-              { v: 506, l: 'A passes · 2024 O/L' },
-              { v: 297, l: 'B passes · 2024 O/L' },
-              { v: 100, l: '% exam-strategy coaching' },
-            ].map((s) => (
-              <div key={s.l} className="text-center">
-                <StatCounter value={s.v} label={s.l} />
+            {aboutTeaser.stats.map((s) => (
+              <div key={s.label} className="text-center">
+                <StatCounter value={s.value} label={s.label} />
               </div>
             ))}
           </SpotlightCard>

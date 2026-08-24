@@ -11,6 +11,7 @@ import Reviews from './pages/Reviews'
 import Blog from './pages/Blog'
 import Contact from './pages/Contact'
 import StudentLogin from './pages/StudentLogin'
+import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 
 export default function App() {
@@ -30,6 +31,7 @@ export default function App() {
             <Route path="blog" element={<Blog />} />
             <Route path="contact" element={<Contact />} />
             <Route path="student-login" element={<StudentLogin />} />
+            <Route path="admin" element={<Admin />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

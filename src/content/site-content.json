@@ -1,0 +1,378 @@
+{
+  "site": {
+    "phone": "+94704 731 415",
+    "phoneHref": "tel:+94704731415",
+    "email": "callcentrenj@gmail.com",
+    "address": "Gampaha, Sri Lanka",
+    "hours": "Mon - Sat: 07:00am - 06:00pm",
+    "footerTagline": "යුගයේ අතිශ්‍රේෂ්ඨතම A/L භෞතික විද්‍යා ගුරුවරයා — NJ Physics සමඟ ඔබේ ජයග්‍රහණය තහවුරු කරගන්න."
+  },
+  "socials": {
+    "facebook": "https://www.facebook.com/njphysics/",
+    "instagram": "https://www.instagram.com/nj_physics?igsh=NHlnaGhnd2lwM284",
+    "tiktok": "https://www.tiktok.com/@nilanthajayasuriya2025?_t=ZS-8vLsxdYXp1G&_r=1",
+    "youtube": "https://www.youtube.com/@NilanthaJayasuriyaPhysics"
+  },
+  "heroStats": [
+    {
+      "value": 1000,
+      "suffix": "+",
+      "label": "Students guided past the A/L mark"
+    },
+    {
+      "value": 27,
+      "suffix": "",
+      "label": "Islandwide exam centres"
+    },
+    {
+      "value": 3,
+      "suffix": "",
+      "label": "Island ranks in 2024 (01 · 03 · 10)"
+    }
+  ],
+  "aboutTeaser": {
+    "rankLine": "2024 A/L Island Top Ranks — 01, 03, 10",
+    "stats": [
+      {
+        "value": 506,
+        "label": "A passes · 2024 O/L"
+      },
+      {
+        "value": 297,
+        "label": "B passes · 2024 O/L"
+      },
+      {
+        "value": 100,
+        "label": "% exam-strategy coaching"
+      }
+    ]
+  },
+  "coverageTitle": "{count} exam halls across the island.",
+  "timetables": [
+    {
+      "src": "/assets/img/timetable/687a25b2dd177.png",
+      "label": "Susipwan · Gampaha"
+    },
+    {
+      "src": "/assets/img/timetable/687a25747e4fe.png",
+      "label": "Online · Islandwide"
+    },
+    {
+      "src": "/assets/img/timetable/687a253fd1c19.png",
+      "label": "Science Center · Galle"
+    },
+    {
+      "src": "/assets/img/timetable/687a24ec9bdbd.png",
+      "label": "Seminar Schedule"
+    }
+  ],
+  "venues": [
+    {
+      "name": "සුසිප්වන්",
+      "city": "GAMPAHA"
+    },
+    {
+      "name": "ONLINE",
+      "city": "ලංකාවටම"
+    },
+    {
+      "name": "සයන්ස් සෙන්ටර්",
+      "city": "GALLE"
+    }
+  ],
+  "topReviews": [
+    {
+      "name": "Dinesh Perera",
+      "year": "A/L Year: 2024",
+      "rank": 1,
+      "thumb": "/assets/img/testimonial/thumb-1.png",
+      "quote": "Achieving Island Rank 1 was a dream come true and it wouldn't have been possible without Sir's brilliant Physics teaching. His logical methods and constant motivation kept me going. Every lesson was crystal clear and full of inspiration. Thank you so much, Sir!!"
+    },
+    {
+      "name": "Sandruwan Fernando",
+      "year": "A/L Year: 2024",
+      "rank": 10,
+      "thumb": "/assets/img/testimonial/thumb-2.png",
+      "quote": "Reaching Island Rank 10 felt like a dream come true! Sir's mastery in Physics and the way he simplified even the hardest concepts were simply life changing. Thank you, Sir, for being the guiding light in our journey to success!"
+    },
+    {
+      "name": "Nadeesha Wickramasinghe",
+      "year": "A/L Year: 2024",
+      "rank": 3,
+      "thumb": "/assets/img/testimonial/thumb-1.png",
+      "quote": "Physics was once my toughest subject but Sir changed everything. His unique teaching style, constant encouragement, and powerful words like 'Believe in yourself and keep practicing' gave me the strength to push forward. ඒ වචන මට ලොකු ශක්තියක් වුණා. Thank you Sir, for helping me reach Island Rank 3!"
+    }
+  ],
+  "studentReviews": [
+    {
+      "name": "Dinuka Perera",
+      "year": "A/L Year: 2022",
+      "thumb": "/assets/img/testimonial/6879a52ceee89.png",
+      "quote": "Physics subject එකට මම හැමදාම බයයි. සංකීර්ණ problems, හැබැයි Sir දෙන simple tricks, real-life examples, ඒ vibe ඒකෙන් තමයි මම විශ්වාසයක් develop කරගත්තේ. 1st shy එකේ esaay ප්‍රශ්න 2ක්වත් හරියට කලේ නෑ. අද essay ප්‍රශ්න 5ක් කලා. මට ගොඩාක් සතුටුයි.මන් ගිය පාරට වඩා මෙවර විභාගය හොඳට කලා.සර්ට ගොඩාක් පින්..."
+    },
+    {
+      "name": "Deshani Fernando",
+      "year": "A/L Year: 2023",
+      "thumb": "/assets/img/testimonial/6879a4f01c63e.png",
+      "quote": "මන් A/L 3rd shy එකටත් attempt එකක් දුන්නේ හොදටම බයවෙලා. පස්සේ සර්ගේ වීඩියෝ, zoom sessions, revision notes ඒවාට මුල් තැන දීලා confidence එක build up කරගත්තා. physics විතරක් නෙමේ, ජීවිතේ ගොඩ යන්නත් motivation එක ලැබුණේ සර්ගෙන්. මම ඉහළින් ම විභාගය pass උනා. සර්ට ගොඩාක් ස්තූතියි.."
+    },
+    {
+      "name": "Malith Fernando",
+      "year": "A/L Year: 2024",
+      "thumb": "/assets/img/testimonial/6879a4b7a303a.png",
+      "quote": "මම කිසිදා හිතුවේ නෑ Physics කියන subject එක මම pass වෙයි කියලා. But Sir simple example වලින් කියන විදියෙන් ඒ අමාරු chapters මතක තියාගන්න මට ලේසි වුණා. සමහර වෙලාවට හිතුනා මම Fail කියලා, හැබැයි Sir කියන එකම වචනේ 'Fail වෙලා ඇති. ඒත් දැන් stop වෙන එක නෙමෙයි. ගේම ගහපන්.' ඒකයි මට ජීවිතේ බලය දුන්නේ.Sir, you're not just a teacher you're a true mentor and guide."
+    }
+  ],
+  "contactCards": [
+    {
+      "icon": "phone",
+      "label": "Call Now",
+      "value": "+94704 731 415",
+      "href": "tel:+94704731415"
+    },
+    {
+      "icon": "mail",
+      "label": "Email",
+      "value": "callcentrenj@gmail.com",
+      "href": "mailto:callcentrenj@gmail.com"
+    },
+    {
+      "icon": "map",
+      "label": "Visit anytime",
+      "value": "Gampaha, Sri Lanka",
+      "href": ""
+    },
+    {
+      "icon": "clock",
+      "label": "Opening Time",
+      "value": "Mon - Sat: 07:00am - 06:00pm",
+      "href": ""
+    }
+  ],
+  "telegramIntroSi": "ඔබත් 2025, 2026, හෝ 2027 වසරේ භෞතික විද්‍යාව හදාරන සිසුවෙක්ද? එසේනම්, Theory classes, paper & Revision sessions සඳහා අදම NJ Physics Telegram Groups සමඟ සම්බන්ධ වන්න!",
+  "telegramGroups": [
+    {
+      "name": "NJ | Physics Main Channel",
+      "url": "https://t.me/+LeM2Q5GR3S9mZDU1"
+    },
+    {
+      "name": "NJ | Physics 2025 Theory",
+      "url": "https://t.me/+YR63yN9Y8uFlYWY1"
+    },
+    {
+      "name": "NJ | Physics 2025 Paper",
+      "url": "https://t.me/+p7Q0RRjHuE8xNGRl"
+    },
+    {
+      "name": "NJ | Physics 2025 Revision",
+      "url": "https://t.me/+te6bCvUhytJjMWVl"
+    },
+    {
+      "name": "NJ | Physics 2026 Theory",
+      "url": "https://t.me/+FyEEdaFZUOpjY2M1"
+    },
+    {
+      "name": "NJ | Physics 2026 Paper",
+      "url": "https://t.me/+xcfJOy7BG2U5YTdl"
+    },
+    {
+      "name": "2027 Telegram Channel",
+      "url": "https://t.me/+FJqH-YQrf5RmZDQ1"
+    },
+    {
+      "name": "2027 Telegram Chat Group",
+      "url": "https://t.me/+18eltM_pGIU4YjA1"
+    }
+  ],
+  "centres": [
+    {
+      "name": "ACBS",
+      "town": "මීගමුව",
+      "url": "https://t.me/+wu67L1EjccE1MWE9",
+      "lat": 7.21,
+      "lng": 79.84
+    },
+    {
+      "name": "සෙන්සිප්",
+      "town": "කුරුණෑගල",
+      "url": "https://t.me/+9Bpb20CN9cg0MDdl",
+      "lat": 7.49,
+      "lng": 80.36
+    },
+    {
+      "name": "නිට්රෝමා",
+      "town": "මහනුවර",
+      "url": "https://t.me/+LFxElE_MYaMxODE1",
+      "lat": 7.29,
+      "lng": 80.64
+    },
+    {
+      "name": "විස්ටා",
+      "town": "අනුරාධපුර",
+      "url": "https://t.me/+nyQ02DEAH45lZDQ9",
+      "lat": 8.31,
+      "lng": 80.41
+    },
+    {
+      "name": "නාලන්දා",
+      "town": "පොළොන්නරුව",
+      "url": "https://t.me/+sSQiqVJb8xI3ZDU1",
+      "lat": 7.94,
+      "lng": 81
+    },
+    {
+      "name": "සැන්සිස්ටා",
+      "town": "අම්පාර",
+      "url": "https://t.me/+WwRZrl9JfAJhMDI1",
+      "lat": 7.3,
+      "lng": 81.68
+    },
+    {
+      "name": "නැණාරා",
+      "town": "මොණරාගල",
+      "url": "https://t.me/+g6SQwWL6ffozYTRl",
+      "lat": 6.87,
+      "lng": 81.35
+    },
+    {
+      "name": "ඉමේජ්",
+      "town": "බණ්ඩාරවෙල",
+      "url": "https://t.me/+F7Tqlu9NECMxZjY1",
+      "lat": 6.83,
+      "lng": 80.96
+    },
+    {
+      "name": "Victory College",
+      "town": "ඇඹිලිපිටිය",
+      "url": "https://t.me/+kjv6-Q2Ria85ODZl",
+      "lat": 6.44,
+      "lng": 80.85
+    },
+    {
+      "name": "මාර්ගා",
+      "town": "තංගල්ල",
+      "url": "https://t.me/+vfDe_vZ5-PVmYTA1",
+      "lat": 6.02,
+      "lng": 80.79
+    },
+    {
+      "name": "A සෙන්ටර්",
+      "town": "අකුරැස්ස",
+      "url": "https://t.me/+oIHeOpE6bzc4NTE1",
+      "lat": 6.1,
+      "lng": 80.55
+    },
+    {
+      "name": "නවාරා",
+      "town": "අම්බලන්ගොඩ",
+      "url": "https://t.me/+WhTZeSSTEG8zYmY1",
+      "lat": 6.24,
+      "lng": 80.05
+    },
+    {
+      "name": "Oxbridge College",
+      "town": "පානදුර",
+      "url": "https://t.me/+aPbkoSYV3AZlZTg1",
+      "lat": 6.71,
+      "lng": 79.9
+    },
+    {
+      "name": "E-Zone",
+      "town": "මතුගම",
+      "url": "https://t.me/+2rPL4fV2gkAyNGY9",
+      "lat": 6.52,
+      "lng": 80.11
+    },
+    {
+      "name": "ශිල්ප",
+      "town": "හොරණ",
+      "url": "https://t.me/+YVOhYmkStAthMWU1",
+      "lat": 6.72,
+      "lng": 80.06
+    },
+    {
+      "name": "සිප්දිය",
+      "town": "රත්නපුර",
+      "url": "https://t.me/+SaH7ylZDyeliOTZl",
+      "lat": 6.68,
+      "lng": 80.4
+    },
+    {
+      "name": "ශ්‍රීපාලි",
+      "town": "හලාවත",
+      "url": "https://t.me/+m4hU1bG3Rh8wZWNl",
+      "lat": 7.58,
+      "lng": 79.8
+    },
+    {
+      "name": "රුවන",
+      "town": "කුලියාපිටිය",
+      "url": "https://t.me/+okq3qgix9zE2NzJl",
+      "lat": 7.47,
+      "lng": 80.04
+    },
+    {
+      "name": "Be 1st",
+      "town": "කෑගල්ල",
+      "url": "https://t.me/+vzzyrivjsSZhMmI9",
+      "lat": 7.25,
+      "lng": 80.34
+    },
+    {
+      "name": "සිප්යානා",
+      "town": "මාතර",
+      "url": "https://t.me/+Ao-ApwD5hSExOWQ1",
+      "lat": 5.95,
+      "lng": 80.54
+    },
+    {
+      "name": "ගුරුමඩල",
+      "town": "කලුතර",
+      "url": "https://t.me/+y_7l3ROMH69jZGVl",
+      "lat": 6.58,
+      "lng": 79.96
+    },
+    {
+      "name": "Golden Gate",
+      "town": "කිරිබත්ගොඩ",
+      "url": "https://t.me/+0wgfIdU3mywwZTY1",
+      "lat": 7.09,
+      "lng": 79.93
+    },
+    {
+      "name": "GCBT",
+      "town": "බදුල්ල",
+      "url": "https://t.me/+AkzPTXwFdnVkM2E9",
+      "lat": 6.99,
+      "lng": 81.05
+    },
+    {
+      "name": "ගුරුගෙදර",
+      "town": "නාත්තණ්ඩිය",
+      "url": "https://t.me/+WE6xJ-2teTM1NjM1",
+      "lat": 7.37,
+      "lng": 79.9
+    },
+    {
+      "name": "සිප්කැන්",
+      "town": "අවිස්සාවේල්ල",
+      "url": "https://t.me/+7CH2wAPfOis3OTg1",
+      "lat": 6.95,
+      "lng": 80.21
+    },
+    {
+      "name": "සිප්සයුර",
+      "town": "මහියංගනය",
+      "url": "https://t.me/+BR5miQP8fFk3NDNl",
+      "lat": 7.33,
+      "lng": 81.28
+    },
+    {
+      "name": "සුදර්ශි",
+      "town": "වේයන්ගොඩ",
+      "url": "https://t.me/+wjFIoKe12CNhMWM1",
+      "lat": 7.16,
+      "lng": 80.07
+    }
+  ]
+}

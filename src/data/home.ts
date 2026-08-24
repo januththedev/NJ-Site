@@ -1,3 +1,6 @@
+import content from '../content/site-content.json'
+import { exams } from './exams'
+
 export const hero = {
   eyebrow: 'NJ PHYSICS · NILANTHA JAYASURIYA',
   titleTop: 'Best Physics',
@@ -8,19 +11,16 @@ export const hero = {
     { kicker: 'HELPING HAND', line: 'Together We Grow.' },
     { kicker: 'FLEXIBLE TIME', line: 'Learn at Your Place.' },
   ],
-  stats: [
-    { value: 1000, suffix: '+', label: 'Students guided past the A/L mark' },
-    { value: 27, suffix: '', label: 'Islandwide exam centres' },
-    { value: 3, suffix: '', label: 'Island ranks in 2024 (01 · 03 · 10)' },
-  ],
+  stats: content.heroStats,
 }
 
 export const aboutTeaser = {
   eyebrow: '#1 Best Physics Teacher',
   title: 'The Guiding Star Behind Sri Lanka’s Top Physics Achievers!',
-  rankLine: '2024 A/L Island Top Ranks — 01, 03, 10',
+  rankLine: content.aboutTeaser.rankLine,
   bodySi:
     'මෙවරත් අපගේ පංතියෙන්! මෙවරත් දිවයිනේ විශිෂ්ටයන් රැසක් බිහි කරමින් ළමුන් 1000+ කට අධික සංඛ්‍යාවකගේ A/L කඩයිම ජය ගැනීමට මඟ පෙන්වූ ඒ අසහාය ගුරුවරයා සමඟ ඔබත් එකතු වන්න.',
+  stats: content.aboutTeaser.stats,
 }
 
 export const scheduleHighlights = {
@@ -53,7 +53,8 @@ export const practicalsBand = {
 
 export const coverage = {
   kicker: 'Island wide coverage',
-  title: '27 exam halls across the island.',
+  // {count} in the CMS value is replaced with the live centre count
+  title: content.coverageTitle.replace('{count}', String(exams.centres.length)),
   body: 'Join the mock-exam network at a centre near you — every hall has its own Telegram group for updates and results.',
 }
 
