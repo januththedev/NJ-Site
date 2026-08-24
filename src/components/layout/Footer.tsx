@@ -51,7 +51,15 @@ export default function Footer() {
       </div>
 
       <div className="container-x mt-12 border-t border-white/5 pt-6 text-center text-xs text-slate-500">
-        Copyright 2026 Physics.lk developed by Januth
+        Copyright 2026 Physics.lk developed by{' '}
+        <a
+          href="https://www.januth.dev"
+          target="_blank"
+          rel="noreferrer"
+          className="font-medium text-slate-400 transition-colors hover:text-glow-cyan"
+        >
+          Januth Nimnal
+        </a>
       </div>
     </footer>
   )
