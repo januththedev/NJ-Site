@@ -6,7 +6,7 @@ import { exams } from '../data/exams'
 export default function Exams() {
   return (
     <div>
-      <PageHero eyebrow="Exams · Location" title={exams.title} subtitle={exams.body} />
+      <PageHero eyebrow="Exams · Location" title={exams.title} subtitle={exams.body} model="paper" />
 
       <section className="container-x mt-8 pb-4">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

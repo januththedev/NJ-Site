@@ -8,7 +8,7 @@ import { classes } from '../data/classes'
 export default function Classes() {
   return (
     <div>
-      <PageHero eyebrow="Classes" title={classes.title} subtitle={classes.body} />
+      <PageHero eyebrow="Classes" title={classes.title} subtitle={classes.body} model="prism" />
 
       <section className="container-x mt-10">
         <div className="flex flex-wrap justify-center gap-3">

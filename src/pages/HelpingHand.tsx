@@ -11,7 +11,7 @@ import { practicalsBand } from '../data/home'
 export default function HelpingHand() {
   return (
     <div>
-      <PageHero eyebrow="Helping Hands" title={helpingHand.title} />
+      <PageHero eyebrow="Helping Hands" title={helpingHand.title} model="island" />
 
       {/* Seminar card */}
       <section className="container-x mt-8">
