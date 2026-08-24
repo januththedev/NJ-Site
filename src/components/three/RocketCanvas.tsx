@@ -22,8 +22,22 @@ export default function RocketCanvas() {
   const [launching, setLaunching] = useState(false)
   const [fading, setFading] = useState(false)
   const [nearBottom, setNearBottom] = useState(false)
+  const [nearTop, setNearTop] = useState(true)
+  // day lighting (light OS scheme) renders the terrain much brighter than the
+  // night rig — the mid-page dim has to be stronger there or sections sit
+  // behind a green haze
+  const [isDay, setIsDay] = useState(
+    () => typeof window !== 'undefined' && !window.matchMedia('(prefers-color-scheme: dark)').matches,
+  )
   const screenRef = useRef({ x: -999, y: -999, visible: false })
   const btnRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const fn = () => setIsDay(!mq.matches)
+    mq.addEventListener('change', fn)
+    return () => mq.removeEventListener('change', fn)
+  }, [])
 
   useEffect(() => {
     let ticking = false
@@ -34,6 +48,7 @@ export default function RocketCanvas() {
         const y = window.scrollY
         const max = document.documentElement.scrollHeight - window.innerHeight
         setNearBottom(max > 0 && y > max - window.innerHeight * 0.75)
+        setNearTop(y < window.innerHeight * 0.9)
         ticking = false
       })
     }
@@ -91,7 +106,6 @@ export default function RocketCanvas() {
     })
   }
 
-  const dimmed = !nearBottom
 
   // The rocket journey belongs to the landing page only
   if (pathname !== '/') return null
@@ -101,7 +115,15 @@ export default function RocketCanvas() {
       <div
         aria-hidden
         className={`pointer-events-none fixed inset-0 transition-opacity duration-700 ${
-          launching ? (fading ? 'z-40 opacity-0' : 'z-40 opacity-100') : dimmed ? 'z-0 opacity-25' : 'z-0 opacity-100'
+          launching
+            ? fading
+              ? 'z-40 opacity-0'
+              : 'z-40 opacity-100'
+            : nearBottom
+              ? 'z-0 opacity-100'
+              : nearTop || !isDay
+                ? 'z-0 opacity-25'
+                : 'z-0 opacity-[0.08]' // mid-page in day mode: bright terrain would haze the sections
         }`}
       >
         <Canvas
