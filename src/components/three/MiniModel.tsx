@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import ModelStage from './ModelStage'
 import OpenBook from './OpenBook'
 import VernierCaliper from './VernierCaliper'
@@ -19,6 +20,9 @@ interface Props {
   animate?: boolean
 }
 
+/** models that respond to hover (cursor + interaction passed down) */
+const INTERACTIVE: ReadonlySet<Props['model']> = new Set(['phone', 'hall', 'mentor', 'paper'])
+
 const LABELS: Record<Props['model'], string> = {
   book: 'Open physics book',
   caliper: 'Vernier caliper measuring a specimen',
@@ -34,8 +38,22 @@ const LABELS: Record<Props['model'], string> = {
 }
 
 /** Compact auto-rotating 3D accent for sub-page heroes — much smaller than the main scenes.
- *  Each page passes its own context-matching model; nothing is reused page-to-page. */
+ *  Each page passes its own context-matching model; nothing is reused page-to-page.
+ *  Interactive models react on hover: the phone answers, the hall raises hands,
+ *  the mentor scene pulls the junior up, and the pen grades the paper. */
 export default function MiniModel({ model, className = '', stageHeight, cameraPosition = [0, 0.4, 4.2], fov = 40, hoverRef, graded, animate }: Props) {
+  const [hovered, setHovered] = useState(false)
+  const [gradeRun, setGradeRun] = useState(0)
+  const interactive = INTERACTIVE.has(model) && model !== 'phone' // phone handles its own hover/cursor
+
+  useEffect(() => {
+    if (!interactive) return
+    document.body.style.cursor = hovered ? 'pointer' : 'auto'
+    return () => {
+      document.body.style.cursor = 'auto'
+    }
+  }, [hovered, interactive])
+
   return (
     <ModelStage
       className={className}
@@ -47,17 +65,29 @@ export default function MiniModel({ model, className = '', stageHeight, cameraPo
       <ambientLight intensity={0.75} />
       <directionalLight position={[4, 6, 4]} intensity={1.5} color="#cfe4ff" />
       <pointLight position={[-3, 1, 2]} intensity={12} color="#38e8ff" distance={14} />
-      {model === 'book' && <OpenBook hoverRef={hoverRef ?? { current: false }} />}
-      {model === 'caliper' && <VernierCaliper animate={animate} />}
-      {model === 'paper' && <ExamPaper trigger={graded ? 1 : 0} />}
-      {model === 'person' && <GlbModel src="/models/person.glb" height={2.3} playAnimation />}
-      {model === 'prism' && <GlbModel src="/models/prism.glb" height={1.7} speed={0.35} />}
-      {model === 'island' && <GlbModel src="/models/study-island.glb" height={2.1} speed={0.3} />}
-      {model === 'map' && <GlbModel src="/models/sri-lanka.glb" height={2.2} speed={0.25} brighten={0.5} />}
-      {model === 'phone' && <Telephone />}
-      {model === 'hall' && <LectureHall />}
-      {model === 'mentor' && <MentorHand />}
-      {model === 'circuit' && <CircuitLab />}
+      <group
+        onPointerOver={
+          interactive
+            ? () => {
+                setHovered(true)
+                if (model === 'paper') setGradeRun((n) => n + 1)
+              }
+            : undefined
+        }
+        onPointerOut={interactive ? () => setHovered(false) : undefined}
+      >
+        {model === 'book' && <OpenBook hoverRef={hoverRef ?? { current: false }} />}
+        {model === 'caliper' && <VernierCaliper animate={animate} />}
+        {model === 'paper' && <ExamPaper trigger={graded ? 1 : gradeRun} />}
+        {model === 'person' && <GlbModel src="/models/person.glb" height={2.3} playAnimation />}
+        {model === 'prism' && <GlbModel src="/models/prism.glb" height={1.7} speed={0.35} />}
+        {model === 'island' && <GlbModel src="/models/study-island.glb" height={2.1} speed={0.3} />}
+        {model === 'map' && <GlbModel src="/models/sri-lanka.glb" height={2.2} speed={0.25} brighten={0.5} />}
+        {model === 'phone' && <Telephone />}
+        {model === 'hall' && <LectureHall active={hovered} />}
+        {model === 'mentor' && <MentorHand active={hovered} />}
+        {model === 'circuit' && <CircuitLab />}
+      </group>
     </ModelStage>
   )
 }

@@ -53,34 +53,62 @@ function Figure({
 /**
  * Helping-Hand hero: the alumni panel stands on the upper level reaching
  * down to pull a new student up — paid mentorship in one image. A soft
- * pulse marks the clasp where the hands meet.
+ * pulse marks the clasp where the hands meet. Hovering completes the story:
+ * the junior is pulled up onto the ledge beside his mentor.
  */
-export default function MentorHand() {
+export default function MentorHand({ active = false }: { active?: boolean }) {
   const clasp = useRef<THREE.Mesh>(null)
   const pulse = useRef<THREE.Mesh>(null)
   const light = useRef<THREE.PointLight>(null)
+  const junior = useRef<THREE.Group>(null)
+  const senior = useRef<THREE.Group>(null)
+  const rise = useRef(0)
+  const _clasp = useMemo(() => new THREE.Vector3(), [])
+  const CLASP_LOW = useMemo(() => new THREE.Vector3(0.42, 0.78, 0.25), [])
+  const CLASP_HIGH = useMemo(() => new THREE.Vector3(0.16, 1.06, 0.25), [])
 
   const pulseMat = useMemo(
     () => new THREE.MeshBasicMaterial({ color: '#38e8ff', transparent: true, opacity: 0.6, toneMapped: false }),
     [],
   )
 
-  useFrame((state) => {
+  useFrame((state, dtRaw) => {
+    const dt = Math.min(dtRaw, 0.05)
     const t = state.clock.elapsedTime
-    const wp = (t * 0.7) % 1
+    // 0 = junior below, 1 = pulled up beside the panel
+    rise.current += ((active ? 1 : 0) - rise.current) * Math.min(1, dt * 3.2)
+    const r = rise.current
+    const ease = r * r * (3 - 2 * r)
+
+    if (junior.current) {
+      junior.current.position.set(
+        THREE.MathUtils.lerp(0.78, 0.42, ease),
+        THREE.MathUtils.lerp(0.12, 0.68, ease),
+        0.1,
+      )
+    }
+    if (senior.current) senior.current.rotation.z = THREE.MathUtils.lerp(0.34, 0.08, ease)
+
+    // the glow travels upward with the pulled-up student
+    const cp = _clasp.lerpVectors(CLASP_LOW, CLASP_HIGH, ease)
+    if (clasp.current) clasp.current.position.copy(cp)
+    if (pulse.current) pulse.current.position.copy(cp)
+    if (light.current) light.current.position.set(cp.x, cp.y + 0.05, cp.z)
+
+    const wp = (t * (0.7 + ease * 1.1)) % 1
     if (pulse.current) {
       pulse.current.visible = wp < 0.8
-      pulse.current.scale.setScalar(0.3 + wp * 1.4)
-      pulseMat.opacity = 0.55 * (1 - wp)
+      pulse.current.scale.setScalar(0.3 + wp * (1.4 + ease * 0.6))
+      pulseMat.opacity = (0.55 + ease * 0.35) * (1 - wp)
     }
-    const beat = 1 + Math.sin(t * 3.2) * 0.25
+    const beat = 1 + Math.sin(t * (3.2 + ease * 2.5)) * (0.25 + ease * 0.2)
     if (clasp.current) clasp.current.scale.setScalar(beat)
-    if (light.current) light.current.intensity = 3 + Math.sin(t * 3.2) * 1.2
+    if (light.current) light.current.intensity = 3 + Math.sin(t * (3.2 + ease * 2.5)) * (1.2 + ease) + ease * 4
   })
 
-  const senior = '#f5a623'
+  const seniorCol = '#f5a623'
   const seniorDim = '#c98a1e'
-  const junior = '#38bdf8'
+  const juniorColor = '#38bdf8'
 
   return (
     <group position={[0, -1.05, 0]} scale={1.45} rotation={[0, 0.42, 0]}>
@@ -103,25 +131,25 @@ export default function MentorHand() {
       <Figure position={[-1.25, 0.8, -0.28]} color={seniorDim} cap phase={1.2} />
       <Figure position={[-0.62, 0.8, -0.34]} color={seniorDim} cap phase={2.6} />
       {/* the one reaching down */}
-      <group position={[-0.12, 0.8, 0.08]} rotation={[0, 0, 0]}>
-        <Figure position={[0, 0, 0]} color={senior} cap lean={0.34} phase={0} />
+      <group ref={senior} position={[-0.12, 0.8, 0.08]} rotation={[0, 0, 0.34]}>
+        <Figure position={[0, 0, 0]} color={seniorCol} cap phase={0} />
         {/* extended arm down toward the junior */}
         <mesh position={[0.34, 0.28, 0]} rotation={[0, 0, -1.05]}>
           <capsuleGeometry args={[0.045, 0.42, 4, 10]} />
-          <meshStandardMaterial color={senior} roughness={0.55} />
+          <meshStandardMaterial color={seniorCol} roughness={0.55} />
         </mesh>
       </group>
 
       {/* the new student reaching up from below */}
-      <group position={[0.78, 0.12, 0.1]}>
-        <Figure position={[0, 0, 0]} color={junior} lean={-0.12} phase={3.4} />
+      <group ref={junior} position={[0.78, 0.12, 0.1]}>
+        <Figure position={[0, 0, 0]} color={juniorColor} lean={-0.12} phase={3.4} />
         <mesh position={[-0.3, 0.52, 0]} rotation={[0, 0, 0.95]}>
           <capsuleGeometry args={[0.045, 0.4, 4, 10]} />
-          <meshStandardMaterial color={junior} roughness={0.55} />
+          <meshStandardMaterial color={juniorColor} roughness={0.55} />
         </mesh>
       </group>
 
-      {/* clasp glow where the hands meet */}
+      {/* clasp glow where the hands meet — travels upward as the junior is pulled up */}
       <pointLight ref={light} position={[0.42, 0.78, 0.25]} color="#38e8ff" intensity={3.5} distance={2.6} />
       <mesh ref={clasp} position={[0.42, 0.78, 0.25]}>
         <sphereGeometry args={[0.05, 12, 10]} />
