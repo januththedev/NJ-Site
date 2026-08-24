@@ -45,7 +45,7 @@ const SOCIAL_LIST = [
 export default function Contact() {
   return (
     <div>
-      <PageHero eyebrow="Contact me" title={contact.title} model="map" />
+      <PageHero eyebrow="Contact me" title={contact.title} model="phone" />
 
       {/* Contact tilt-cards */}
       <section className="container-x mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

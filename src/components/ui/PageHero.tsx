@@ -4,7 +4,7 @@ interface Props {
   eyebrow: string
   title: string
   subtitle?: string
-  model?: 'book' | 'caliper' | 'paper' | 'person' | 'prism' | 'island' | 'map'
+  model?: 'book' | 'caliper' | 'paper' | 'person' | 'prism' | 'island' | 'map' | 'phone' | 'hall' | 'mentor'
 }
 
 /** Sub-page header with a small rotating 3D accent. */
