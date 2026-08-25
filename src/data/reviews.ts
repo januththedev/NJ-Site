@@ -1,4 +1,4 @@
-import content from '../content/site-content.json'
+import type { Content } from '../content/store'
 
 export interface Review {
   name: string
@@ -8,5 +8,9 @@ export interface Review {
   thumb?: string
 }
 
-export const topReviews: Review[] = content.topReviews
-export const studentReviews: Review[] = content.studentReviews
+export function getReviewsData(content: Content) {
+  return {
+    topReviews: content.topReviews as Review[],
+    studentReviews: content.studentReviews as Review[],
+  }
+}

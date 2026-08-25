@@ -3,9 +3,11 @@ import PageHero from '../components/ui/PageHero'
 import PosterFrame from '../components/ui/PosterFrame'
 import SectionHeading from '../components/ui/SectionHeading'
 import MagneticButton from '../components/ui/MagneticButton'
-import { classes } from '../data/classes'
+import { getClassesData } from '../data/classes'
+import { useContent } from '../content/store'
 
 export default function Classes() {
+  const classes = getClassesData(useContent())
   return (
     <div>
       <PageHero eyebrow="Classes" title={classes.title} subtitle={classes.body} model="hall" />

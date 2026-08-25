@@ -2,7 +2,8 @@ import { Award } from 'lucide-react'
 import PageHero from '../components/ui/PageHero'
 import SpotlightCard from '../components/ui/SpotlightCard'
 import SectionHeading from '../components/ui/SectionHeading'
-import { studentReviews, topReviews } from '../data/reviews'
+import { getReviewsData } from '../data/reviews'
+import { useContent } from '../content/store'
 
 function Stars() {
   return (
@@ -15,6 +16,7 @@ function Stars() {
 }
 
 export default function Reviews() {
+  const { topReviews, studentReviews } = getReviewsData(useContent())
   return (
     <div>
       <PageHero eyebrow="Reviews" title="See What Our Top Students Say About Me!" />

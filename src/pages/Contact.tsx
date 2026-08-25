@@ -2,8 +2,9 @@ import { Clock, Mail, MapPin, Phone, Send } from 'lucide-react'
 import PageHero from '../components/ui/PageHero'
 import SpotlightCard from '../components/ui/SpotlightCard'
 import SectionHeading from '../components/ui/SectionHeading'
-import { contact } from '../data/contact'
-import { socials } from '../data/site'
+import { getContactData } from '../data/contact'
+import { useContent } from '../content/store'
+import { getSiteData } from '../data/site'
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   phone: Phone,
@@ -35,14 +36,15 @@ const YouTubeIcon = () => (
   </svg>
 )
 
-const SOCIAL_LIST = [
-  { name: 'Facebook', href: socials.facebook, Icon: FacebookIcon },
-  { name: 'Instagram', href: socials.instagram, Icon: InstagramIcon },
-  { name: 'TikTok', href: socials.tiktok, Icon: TikTokIcon },
-  { name: 'YouTube', href: socials.youtube, Icon: YouTubeIcon },
-]
-
 export default function Contact() {
+  const contact = getContactData(useContent())
+  const { socials } = getSiteData(useContent())
+  const SOCIAL_LIST = [
+    { name: 'Facebook', href: socials.facebook, Icon: FacebookIcon },
+    { name: 'Instagram', href: socials.instagram, Icon: InstagramIcon },
+    { name: 'TikTok', href: socials.tiktok, Icon: TikTokIcon },
+    { name: 'YouTube', href: socials.youtube, Icon: YouTubeIcon },
+  ]
   return (
     <div>
       <PageHero eyebrow="Contact me" title={contact.title} model="phone" />

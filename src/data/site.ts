@@ -1,18 +1,4 @@
-import content from '../content/site-content.json'
-
-export const site = {
-  name: 'NJ Physics',
-  teacher: 'Nilantha Jayasuriya',
-  tagline: 'Advanced Level Physics for All Island',
-  footerTagline: content.site.footerTagline,
-  phone: content.site.phone,
-  phoneHref: content.site.phoneHref,
-  hotline: '+94 33 221 8614',
-  email: content.site.email,
-  altEmail: 'physicslk@gmail.com',
-  address: content.site.address,
-  hours: content.site.hours,
-} as const
+import type { Content } from '../content/store'
 
 export const navLinks = [
   { to: '/', label: 'Home' },
@@ -33,13 +19,6 @@ export const footerLinks = [
   navLinks[5],
 ] as const
 
-export const socials = {
-  facebook: content.socials.facebook,
-  instagram: content.socials.instagram,
-  tiktok: content.socials.tiktok,
-  youtube: content.socials.youtube,
-} as const
-
 /** Protected student portals — hrefs must stay byte-for-byte identical. */
 export const portalUrls = {
   scienceCenter: 'https://physics.lk/sciencescenter_students/login.php',
@@ -48,3 +27,27 @@ export const portalUrls = {
   onlineEclass: 'https://physicsapp.eclass.lk/login',
   onlineEclassRegister: 'https://physicsapp.eclass.lk/register/new',
 } as const
+
+export function getSiteData(content: Content) {
+  return {
+    site: {
+      name: 'NJ Physics',
+      teacher: 'Nilantha Jayasuriya',
+      tagline: 'Advanced Level Physics for All Island',
+      footerTagline: content.site.footerTagline,
+      phone: content.site.phone,
+      phoneHref: content.site.phoneHref,
+      hotline: '+94 33 221 8614',
+      email: content.site.email,
+      altEmail: 'physicslk@gmail.com',
+      address: content.site.address,
+      hours: content.site.hours,
+    },
+    socials: {
+      facebook: content.socials.facebook,
+      instagram: content.socials.instagram,
+      tiktok: content.socials.tiktok,
+      youtube: content.socials.youtube,
+    },
+  }
+}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import baseContent from '../content/site-content.json'
+import { contentStore } from '../content/store'
 import { Save, Upload, Lock, CheckCircle2, AlertTriangle, Plus, Trash2 } from 'lucide-react'
 
 type Content = typeof baseContent
@@ -115,7 +116,7 @@ function RowCard({ children, onDelete }: { children: React.ReactNode; onDelete?:
 }
 
 export default function Admin() {
-  const [content, setContent] = useState<Content>(() => structuredClone(baseContent))
+  const [content, setContent] = useState<Content>(() => structuredClone(contentStore.get()))
   const [key, setKey] = useState(() => sessionStorage.getItem('nj-admin-key') ?? '')
   const [keyInput, setKeyInput] = useState('')
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -128,12 +129,12 @@ export default function Admin() {
     fetch('/api/content')
       .then((r) => r.json())
       .then((b) => {
-        if (b.ok) setContent(b.content)
-        else setLive(false)
+        if (b.ok && b.content) setContent(b.content)
+        else if (!b.ok) setLive(false)
       })
       .catch(() => {
         setLive(false)
-        setLoadError('This static build cannot save edits — run `npm run dev` and open the admin there.')
+        setLoadError('This static build cannot reach a content API — run `npm run dev`, or deploy to Vercel with KV connected.')
       })
   }, [])
 
@@ -159,6 +160,8 @@ export default function Admin() {
       })
       const body = await res.json()
       if (!body.ok) throw new Error(body.error ?? 'save failed')
+      // push the saved content into the live store so the site swaps instantly
+      contentStore.set(structuredClone(content))
       setStatus('saved')
       setTimeout(() => setStatus('idle'), 2500)
     } catch (e) {

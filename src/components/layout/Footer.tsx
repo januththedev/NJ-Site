@@ -1,5 +1,6 @@
 import { Mail, MapPin, Phone } from 'lucide-react'
-import { site, socials } from '../../data/site'
+import { getSiteData } from '../../data/site'
+import { useContent } from '../../content/store'
 
 const TikTok = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -12,6 +13,7 @@ const TikTok = (props: React.SVGProps<SVGSVGElement>) => (
  * open middle column where the scroll-journey rocket lands dead center.
  */
 export default function Footer() {
+  const { site, socials } = getSiteData(useContent())
   return (
     <footer className="relative z-10 mt-10 border-t border-white/10 bg-night-900/30 pb-8 pt-14">
       <div className="container-x grid items-center gap-12 md:grid-cols-[1fr_minmax(180px,0.9fr)_1fr]">

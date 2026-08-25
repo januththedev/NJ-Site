@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Loader2, MapPin, Navigation, Send } from 'lucide-react'
 import PageHero from '../components/ui/PageHero'
 import SpotlightCard from '../components/ui/SpotlightCard'
-import { exams } from '../data/exams'
+import { getExamsData } from '../data/exams'
+import { useContent } from '../content/store'
 
 /** Great-circle distance in km between two lat/lng points. */
 function haversineKm(aLat: number, aLng: number, bLat: number, bLng: number) {
@@ -17,6 +18,7 @@ function haversineKm(aLat: number, aLng: number, bLat: number, bLng: number) {
 }
 
 export default function Exams() {
+  const exams = getExamsData(useContent())
   const [nearest, setNearest] = useState<{ idx: number; km: number } | null>(null)
   const [status, setStatus] = useState<'idle' | 'locating' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')

@@ -1,8 +1,10 @@
-import content from '../content/site-content.json'
+import type { Content } from '../content/store'
 
-export const contact = {
-  title: "We're Here to Help",
-  cards: content.contactCards,
-  telegramIntroSi: content.telegramIntroSi,
-  telegramGroups: content.telegramGroups,
+export function getContactData(content: Content) {
+  return {
+    title: "We're Here to Help",
+    cards: content.contactCards,
+    telegramIntroSi: content.telegramIntroSi,
+    telegramGroups: content.telegramGroups,
+  }
 }

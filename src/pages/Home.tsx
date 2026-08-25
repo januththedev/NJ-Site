@@ -14,12 +14,17 @@ import MagneticButton from '../components/ui/MagneticButton'
 import PosterFrame from '../components/ui/PosterFrame'
 import FaqAccordion from '../components/ui/FaqAccordion'
 import { useGsapContext, gsap, ScrollTrigger } from '../hooks/useGsapContext'
-import { hero, aboutTeaser, scheduleHighlights, cards, practicalsBand, coverage, ctaBand } from '../data/home'
-import { classes } from '../data/classes'
-import { topReviews } from '../data/reviews'
+import { getHomeData, scheduleHighlights, cards, practicalsBand, ctaBand } from '../data/home'
+import { getClassesData } from '../data/classes'
+import { getReviewsData } from '../data/reviews'
+import { useContent } from '../content/store'
 import { faqs } from '../data/helpingHand'
 
 export default function Home() {
+  const content = useContent()
+  const { hero, aboutTeaser, coverage } = getHomeData(content)
+  const classes = getClassesData(content)
+  const { topReviews } = getReviewsData(content)
   const root = useRef<HTMLElement>(null)
   const bookHover = useRef(false)
   const paperZone = useRef<HTMLDivElement>(null)

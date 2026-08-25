@@ -2,7 +2,8 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
-import { exams } from '../../data/exams'
+import { getExamsData } from '../../data/exams'
+import { useContent } from '../../content/store'
 
 /**
  * Stylized 3D Sri Lanka map with exactly 27 glowing, pulsing pinpoints —
@@ -12,17 +13,18 @@ export default function LankaMap() {
   const { scene } = useGLTF('/models/sri-lanka.glb')
   const group = useRef<THREE.Group>(null)
   const pins = useRef<THREE.Mesh[]>([])
+  const { centres } = getExamsData(useContent())
 
   // map local space: x=(lng-80.8)*2.6, y=(lat-7.87)*2.6 (matches the GLB builder)
   const pinPositions = useMemo(
     () =>
-      exams.centres.map((c) => ({
+      centres.map((c) => ({
         x: (c.lng - 80.8) * 2.6,
         y: (c.lat - 7.87) * 2.6,
         z: 0.2,
         name: c.name,
       })),
-    [],
+    [centres],
   )
 
   useMemo(() => void scene, [scene])
