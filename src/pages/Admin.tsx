@@ -100,14 +100,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function RowCard({ children, onDelete }: { children: React.ReactNode; onDelete?: () => void }) {
   return (
-    <div className="relative rounded-2xl border border-white/5 bg-night-900/60 p-4">
+    <div className="relative rounded-2xl border border-white/5 bg-night-900/60 p-4 pr-24">
       {onDelete && (
         <button
           onClick={onDelete}
-          aria-label="Remove row"
-          className="absolute right-3 top-3 rounded-full p-1.5 text-slate-600 transition hover:bg-red-500/10 hover:text-red-400"
+          className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold text-slate-500 ring-1 ring-white/10 transition hover:bg-red-500/15 hover:text-red-400 hover:ring-red-400/40"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-3 w-3" /> Delete
         </button>
       )}
       <div className="space-y-3">{children}</div>
@@ -391,7 +390,7 @@ export default function Admin() {
         {/* ── Contact page ── */}
         <Section title="Contact page">
           {c.contactCards.map((card, i) => (
-            <RowCard key={i}>
+            <RowCard key={i} onDelete={() => patch((d) => void d.contactCards.splice(i, 1))}>
               <div className="grid grid-cols-[110px_1fr_1fr] gap-3">
                 <label className="block">
                   <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-500">Icon</span>
@@ -413,6 +412,12 @@ export default function Admin() {
               <Field label="Link (optional)" value={card.href} onChange={(v) => void patch((d) => void (d.contactCards[i].href = v))} />
             </RowCard>
           ))}
+          <button
+            onClick={() => patch((d) => void d.contactCards.push({ icon: 'phone', label: 'New Card', value: '…', href: '' }))}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-glow-cyan hover:underline"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add card
+          </button>
           <div className="h-px bg-white/5" />
           <Field label="Telegram intro (Sinhala)" value={c.telegramIntroSi} onChange={(v) => void patch((d) => void (d.telegramIntroSi = v))} textarea />
           {c.telegramGroups.map((g, i) => (
