@@ -3,6 +3,8 @@ import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { getLenis } from '../layout/SmoothScroll'
+import { darkenMaterials } from './materialTint'
+import { useTheme } from '../../theme'
 
 /**
  * Open physics book with physically-motivated page turns:
@@ -16,6 +18,9 @@ const PW = 0.96 // flipping-page width (must match the builder)
 
 export default function OpenBook({ hoverRef }: { hoverRef: React.MutableRefObject<boolean> }) {
   const { scene } = useGLTF('/models/open-book.glb')
+  const theme = useTheme()
+  // cream pages wash out on the light stage — darken a touch (idempotent)
+  useMemo(() => darkenMaterials(scene, theme === 'light' ? 0.38 : 0), [scene, theme])
   const group = useRef<THREE.Group>(null)
 
   const pages = useMemo(() => {

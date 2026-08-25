@@ -3,6 +3,8 @@ import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import { gsap } from '../../hooks/useGsapContext'
+import { darkenMaterials } from './materialTint'
+import { useTheme } from '../../theme'
 
 /**
  * Exam paper that gets graded by a red pen:
@@ -13,6 +15,10 @@ import { gsap } from '../../hooks/useGsapContext'
  */
 export default function ExamPaper({ trigger = 0 }: { trigger?: number }) {
   const { scene } = useGLTF('/models/exam-paper.glb')
+  const theme = useTheme()
+  // the paper is white — darken it a touch on the light theme so it keeps
+  // contrast against the light stage (idempotent, originals memoised)
+  useMemo(() => darkenMaterials(scene, theme === 'light' ? 0.45 : 0), [scene, theme])
   const strokes = useRef<THREE.Group[]>([])
   const ring = useRef<THREE.Group | null>(null)
   const gradeA = useRef<THREE.Object3D | null>(null)

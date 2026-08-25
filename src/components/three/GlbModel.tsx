@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
+import { darkenMaterials } from './materialTint'
 
 /**
  * Generic GLB accent for the sub-page heroes — normalizes any model to a
@@ -39,20 +40,9 @@ export default function GlbModel({
   const object = useMemo(() => {
     if (darken) {
       // skinned/animated models: swap materials IN PLACE (cloning the
-      // hierarchy would break skinning). userData keeps the untouched
-      // original so re-visits never compound the darkening. The factor
-      // must be high — color only MULTIPLIES the texture.
-      scene.traverse((o) => {
-        const mesh = o as THREE.Mesh
-        const mat = mesh.material as THREE.MeshStandardMaterial
-        if (!mat || !(mat as THREE.MeshStandardMaterial).color) return
-        const orig = (mesh.userData.origMat ?? mat) as THREE.MeshStandardMaterial
-        mesh.userData.origMat = orig
-        const m = orig.clone()
-        // lerp toward dark slate — works whatever the base color is
-        m.color = (orig.color ?? new THREE.Color('#ffffff')).clone().lerp(new THREE.Color('#39485c'), darken)
-        mesh.material = m
-      })
+      // hierarchy would break skinning). The factor must be high — color
+      // only MULTIPLIES the texture.
+      darkenMaterials(scene, darken)
       return scene
     }
     if (!brighten) return scene
