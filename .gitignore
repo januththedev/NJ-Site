@@ -4,3 +4,6 @@ dist
 .tmp
 /*.png
 *.local
+.env
+.env.*
+!.env.example

@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from 'vite'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -26,7 +26,7 @@ function readBody(req: fs.ReadableStream | import('node:http').IncomingMessage):
  * Edits hit the real source file, so they persist, ship with the next build,
  * and hot-reload every page that reads the content layer.
  */
-function contentApi(): Plugin {
+function contentApi(PASSCODE: string): Plugin {
   return {
     name: 'nj-content-api',
     configureServer(server) {
@@ -88,8 +88,14 @@ function contentApi(): Plugin {
   }
 }
 
-export default defineConfig({
-  plugins: [react(), contentApi()],
-  server: { port: 5173 },
-  preview: { port: 4173 },
+export default defineConfig(({ mode }) => {
+  // ADMIN_PASSCODE can come from the shell OR a .env / .env.local file;
+  // real shell variables win over file values
+  const env = { ...loadEnv(mode, process.cwd(), ''), ...process.env } as Record<string, string>
+  const passcode = env.ADMIN_PASSCODE ?? 'nj-admin-2026'
+  return {
+    plugins: [react(), contentApi(passcode)],
+    server: { port: 5173 },
+    preview: { port: 4173 },
+  }
 })
