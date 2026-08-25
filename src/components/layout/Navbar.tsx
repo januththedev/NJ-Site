@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import { Atom, LogIn, Menu, X } from 'lucide-react'
+import ThemeToggle from './ThemeToggle'
 
 const links = [
   { to: '/', label: 'Home' },
@@ -56,6 +57,7 @@ export default function Navbar() {
           </ul>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             {/* Student Login — extreme right edge, only at the very top of the page */}
             <NavLink
               to="/student-login"

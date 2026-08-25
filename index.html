@@ -16,6 +16,17 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // apply the saved theme before first paint (no dark-flash for light users)
+      try {
+        var t = localStorage.getItem('nj-theme')
+        var osLight = window.matchMedia('(prefers-color-scheme: light)').matches
+        if (t === 'light' || (!t && osLight)) {
+          document.documentElement.classList.add('light')
+          document.documentElement.style.colorScheme = 'light'
+        }
+      } catch (e) {}
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import { useGLTF, Stars } from '@react-three/drei'
 import * as THREE from 'three'
 import { gsap, ScrollTrigger } from '../../hooks/useGsapContext'
+import { getTheme, onThemeChange } from '../../theme'
 
 /* ── Terrain: low-poly rolling landscape, flat around the launchpad ── */
 function useTerrainGeometry() {
@@ -247,19 +248,12 @@ export default function RocketScene({
   const moonGeo = useMemo(makeMoonGeometry, [])
   const moonGroup = useRef<THREE.Group>(null)
 
-  const [isNight, setIsNight] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches,
-  )
+  const [isNight, setIsNight] = useState(() => getTheme() === 'dark')
+
+  useEffect(() => onThemeChange((t) => setIsNight(t === 'dark')), [])
   // The page itself is the backdrop during the whole flight — stars would
   // paint over the scrolling content, so they take a break while airborne.
   const [hideStars, setHideStars] = useState(false)
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const fn = () => setIsNight(mq.matches)
-    mq.addEventListener('change', fn)
-    return () => mq.removeEventListener('change', fn)
-  }, [])
 
   // collect named parts from the GLB; hang the exhaust plume off the rocket
   useMemo(() => {

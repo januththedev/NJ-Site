@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom'
 import RocketScene from './RocketScene'
 import { gsap } from '../../hooks/useGsapContext'
 import { getLenis } from '../layout/SmoothScroll'
+import { getTheme, onThemeChange } from '../../theme'
 
 type FlightWindow = Window & { __startFlight?: () => void; __flightActive?: boolean }
 
@@ -23,21 +24,14 @@ export default function RocketCanvas() {
   const [fading, setFading] = useState(false)
   const [nearBottom, setNearBottom] = useState(false)
   const [nearTop, setNearTop] = useState(true)
-  // day lighting (light OS scheme) renders the terrain much brighter than the
+  // day lighting (light theme) renders the terrain much brighter than the
   // night rig — the mid-page dim has to be stronger there or sections sit
   // behind a green haze
-  const [isDay, setIsDay] = useState(
-    () => typeof window !== 'undefined' && !window.matchMedia('(prefers-color-scheme: dark)').matches,
-  )
+  const [isDay, setIsDay] = useState(() => getTheme() === 'light')
   const screenRef = useRef({ x: -999, y: -999, visible: false })
   const btnRef = useRef<HTMLButtonElement>(null)
 
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const fn = () => setIsDay(!mq.matches)
-    mq.addEventListener('change', fn)
-    return () => mq.removeEventListener('change', fn)
-  }, [])
+  useEffect(() => onThemeChange((t) => setIsDay(t === 'light')), [])
 
   useEffect(() => {
     let ticking = false
