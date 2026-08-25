@@ -6,10 +6,26 @@ import { kv } from '@vercel/kv'
 const PASSCODE = process.env.ADMIN_PASSCODE ?? 'nj-admin-2026'
 const CONTENT_KEY = 'site-content'
 
-// bundled fallback (the build-time content) for a fresh, empty database
-const FALLBACK = JSON.parse(
-  fs.readFileSync(path.join(process.cwd(), 'src/content/site-content.json'), 'utf-8'),
-)
+// bundled fallback (the build-time content) for a fresh, empty database.
+// Read lazily and defensively — a missing file must never crash the function
+// at import time (Vercel's file tracing may not include src/).
+let fallbackCache: unknown = null
+function fallbackContent(): unknown {
+  if (fallbackCache !== null) return fallbackCache
+  for (const p of [
+    path.join(process.cwd(), 'src/content/site-content.json'),
+    path.join(__dirname, '../src/content/site-content.json'),
+    path.join(__dirname, '../../src/content/site-content.json'),
+  ]) {
+    try {
+      fallbackCache = JSON.parse(fs.readFileSync(p, 'utf-8'))
+      break
+    } catch {
+      /* try next path */
+    }
+  }
+  return fallbackCache
+}
 
 function json(res: { statusCode: number; setHeader: (k: string, v: string) => void; end: (b?: string) => void }, code: number, body: unknown) {
   res.statusCode = code
@@ -21,10 +37,10 @@ export default async function handler(req: { method?: string; headers: Record<st
   if (req.method === 'GET') {
     try {
       const saved = await kv.get(CONTENT_KEY)
-      return json(res, 200, { ok: true, content: saved ?? FALLBACK })
+      return json(res, 200, { ok: true, content: saved ?? fallbackContent() })
     } catch {
       // KV not connected — serve the bundled content read-only
-      return json(res, 200, { ok: true, content: FALLBACK, readOnly: true })
+      return json(res, 200, { ok: true, content: fallbackContent(), readOnly: true })
     }
   }
 

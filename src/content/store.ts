@@ -32,14 +32,37 @@ export function useContent(): Content {
 }
 
 let hydrating = false
-/** Fetch the latest saved content from the API once per page load. */
+/**
+ * Fetch the latest saved content from the API once per page load.
+ * Content from the database is shape-checked before it replaces the store —
+ * malformed/partial saves fall back to the bundled content so no page,
+ * model or section can ever go missing because of bad data.
+ */
+function looksValid(c: unknown): c is Content {
+  if (!c || typeof c !== 'object') return false
+  const v = c as Record<string, unknown>
+  return (
+    Array.isArray(v.centres) &&
+    v.centres.length > 0 &&
+    Array.isArray(v.heroStats) &&
+    Array.isArray(v.timetables) &&
+    Array.isArray(v.topReviews) &&
+    Array.isArray(v.studentReviews) &&
+    Array.isArray(v.contactCards) &&
+    Array.isArray(v.telegramGroups) &&
+    typeof v.site === 'object' &&
+    v.site !== null &&
+    typeof v.coverageTitle === 'string'
+  )
+}
+
 export function hydrateContent() {
   if (hydrating) return
   hydrating = true
   fetch('/api/content')
     .then((r) => (r.ok ? r.json() : null))
     .then((b) => {
-      if (b?.ok && b.content && typeof b.content === 'object' && Array.isArray(b.content.centres)) {
+      if (b?.ok && looksValid(b.content)) {
         contentStore.set(b.content as Content)
       }
     })
