@@ -16,7 +16,6 @@ import FaqAccordion from '../components/ui/FaqAccordion'
 import { useGsapContext, gsap, ScrollTrigger } from '../hooks/useGsapContext'
 import { hero, aboutTeaser, scheduleHighlights, cards, practicalsBand, coverage, ctaBand } from '../data/home'
 import { classes } from '../data/classes'
-import { exams } from '../data/exams'
 import { topReviews } from '../data/reviews'
 import { faqs } from '../data/helpingHand'
 
@@ -203,7 +202,7 @@ export default function Home() {
 
       {/* ── Island-wide coverage — 3D Sri Lanka map with 27 pins ──── */}
       <section className="container-x mt-20 sm:mt-24 lg:mt-32">
-        <SectionHeading eyebrow={coverage.kicker} title={`${exams.centres.length} exam halls across the island.`} />
+        <SectionHeading eyebrow={coverage.kicker} title={coverage.title} />
         <p className="mx-auto -mt-6 mb-10 max-w-xl text-center text-slate-400">{coverage.body}</p>
         <div className="glass mx-auto max-w-3xl rounded-[2rem] p-4" data-rise>
           <ModelStage height="460px" cameraPosition={[0, 2.2, 23]} fov={38} ariaLabel="3D map of Sri Lanka with 27 glowing exam hall pins">

@@ -315,11 +315,19 @@ export default function Admin() {
           </button>
           <div className="h-px bg-white/5" />
           {c.venues.map((v, i) => (
-            <div key={i} className="grid grid-cols-2 gap-3">
-              <Field label="Venue name" value={v.name} onChange={(x) => void patch((d) => void (d.venues[i].name = x))} />
-              <Field label="City" value={v.city} onChange={(x) => void patch((d) => void (d.venues[i].city = x))} />
-            </div>
+            <RowCard key={i} onDelete={() => patch((d) => void d.venues.splice(i, 1))}>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Venue name" value={v.name} onChange={(x) => void patch((d) => void (d.venues[i].name = x))} />
+                <Field label="City" value={v.city} onChange={(x) => void patch((d) => void (d.venues[i].city = x))} />
+              </div>
+            </RowCard>
           ))}
+          <button
+            onClick={() => patch((d) => void d.venues.push({ name: 'New Venue', city: 'CITY' }))}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-glow-cyan hover:underline"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add venue
+          </button>
         </Section>
 
         {/* ── Reviews ── */}
