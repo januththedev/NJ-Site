@@ -17,6 +17,7 @@ export default function GlbModel({
   speed = 0.45,
   playAnimation = false,
   brighten = 0,
+  darken = 0,
 }: {
   src: string
   /** normalized world height on the stage */
@@ -28,12 +29,32 @@ export default function GlbModel({
    *  Clones the scene (never mutates the shared useGLTF cache) — only for
    *  static models; skinned/animated ones must stay uncloned. */
   brighten?: number
+  /** darkens pale materials so they keep contrast on the light stage. */
+  darken?: number
 }) {
   const { scene, animations } = useGLTF(src)
   const group = useRef<THREE.Group>(null)
   const mixer = useRef<THREE.AnimationMixer | null>(null)
 
   const object = useMemo(() => {
+    if (darken) {
+      // skinned/animated models: swap materials IN PLACE (cloning the
+      // hierarchy would break skinning). userData keeps the untouched
+      // original so re-visits never compound the darkening. The factor
+      // must be high — color only MULTIPLIES the texture.
+      scene.traverse((o) => {
+        const mesh = o as THREE.Mesh
+        const mat = mesh.material as THREE.MeshStandardMaterial
+        if (!mat || !(mat as THREE.MeshStandardMaterial).color) return
+        const orig = (mesh.userData.origMat ?? mat) as THREE.MeshStandardMaterial
+        mesh.userData.origMat = orig
+        const m = orig.clone()
+        // lerp toward dark slate — works whatever the base color is
+        m.color = (orig.color ?? new THREE.Color('#ffffff')).clone().lerp(new THREE.Color('#39485c'), darken)
+        mesh.material = m
+      })
+      return scene
+    }
     if (!brighten) return scene
     const clone = scene.clone(true)
     clone.traverse((o) => {
@@ -47,7 +68,7 @@ export default function GlbModel({
       }
     })
     return clone
-  }, [scene, brighten])
+  }, [scene, brighten, darken])
 
   const { scale, center } = useMemo(() => {
     const box = new THREE.Box3().setFromObject(object)

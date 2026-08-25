@@ -8,6 +8,7 @@ import Telephone from './Telephone'
 import MentorHand from './MentorHand'
 import LectureHall from './LectureHall'
 import CircuitLab from './CircuitLab'
+import { useTheme } from '../../theme'
 
 interface Props {
   model: 'book' | 'caliper' | 'paper' | 'person' | 'prism' | 'island' | 'map' | 'phone' | 'hall' | 'mentor' | 'circuit'
@@ -44,6 +45,7 @@ const LABELS: Record<Props['model'], string> = {
 export default function MiniModel({ model, className = '', stageHeight, cameraPosition = [0, 0.4, 4.2], fov = 40, hoverRef, graded, animate }: Props) {
   const [hovered, setHovered] = useState(false)
   const [gradeRun, setGradeRun] = useState(0)
+  const theme = useTheme()
   const interactive = INTERACTIVE.has(model) && model !== 'phone' // phone handles its own hover/cursor
 
   useEffect(() => {
@@ -79,7 +81,9 @@ export default function MiniModel({ model, className = '', stageHeight, cameraPo
         {model === 'book' && <OpenBook hoverRef={hoverRef ?? { current: false }} />}
         {model === 'caliper' && <VernierCaliper animate={animate} />}
         {model === 'paper' && <ExamPaper trigger={graded ? 1 : gradeRun} />}
-        {model === 'person' && <GlbModel src="/models/person.glb" height={2.3} playAnimation />}
+        {model === 'person' && (
+        <GlbModel src="/models/person.glb" height={2.3} playAnimation darken={theme === 'light' ? 0.78 : 0} />
+      )}
         {model === 'prism' && <GlbModel src="/models/prism.glb" height={1.7} speed={0.35} />}
         {model === 'island' && <GlbModel src="/models/study-island.glb" height={2.1} speed={0.3} />}
         {model === 'map' && <GlbModel src="/models/sri-lanka.glb" height={2.2} speed={0.25} brighten={0.5} />}

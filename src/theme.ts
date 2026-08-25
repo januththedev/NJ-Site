@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from 'react'
+
 /**
  * Site theme store. The DOM theme is a class on <html> ("light" — absence
  * means dark, the site's native look). The 3D scenes subscribe here too so
@@ -41,4 +43,12 @@ export function onThemeChange(fn: (t: Theme) => void) {
   return () => {
     listeners.delete(fn)
   }
+}
+
+/** React hook for the current theme (re-renders the caller on toggle). */
+export function useTheme(): Theme {
+  return useSyncExternalStore(
+    (fn) => onThemeChange(() => fn()),
+    () => getTheme(),
+  )
 }
