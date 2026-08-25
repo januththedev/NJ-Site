@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import baseContent from '../content/site-content.json'
 import { Save, Upload, Lock, CheckCircle2, AlertTriangle, Plus, Trash2 } from 'lucide-react'
 
@@ -123,6 +123,7 @@ export default function Admin() {
   const [error, setError] = useState('')
   const [live, setLive] = useState(true) // false when the save API is unreachable (static build)
   const [loadError, setLoadError] = useState('')
+  const centresScroll = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetch('/api/content')
@@ -166,6 +167,23 @@ export default function Admin() {
       setError(e instanceof Error && e.message === 'wrong passcode' ? 'Wrong passcode.' : String(e))
     }
   }
+
+  // when a centre row is added, bring it into view and focus its name field —
+  // otherwise the new row hides at the bottom of the scrolled list and adding
+  // looks like nothing happened
+  const centreCount = content.centres.length
+  const prevCentreCount = useRef(centreCount)
+  useEffect(() => {
+    if (centreCount > prevCentreCount.current) {
+      const el = centresScroll.current
+      if (el) {
+        el.scrollTop = el.scrollHeight
+        const inputs = el.querySelectorAll('input')
+        inputs[inputs.length - 5]?.focus() // name is the first of each row's 5 fields
+      }
+    }
+    prevCentreCount.current = centreCount
+  }, [centreCount])
 
   /* ── passcode gate ── */
   if (!key) {
@@ -418,7 +436,7 @@ export default function Admin() {
           <p className="text-xs text-slate-500">
             Name, town, Telegram invite and map pin coordinates (lat/lng power the nearest-centre locator).
           </p>
-          <div className="max-h-[520px] space-y-3 overflow-y-auto pr-1">
+          <div ref={centresScroll} className="max-h-[520px] space-y-3 overflow-y-auto pr-1">
             {c.centres.map((ct, i) => (
               <RowCard key={i} onDelete={() => patch((d) => void d.centres.splice(i, 1))}>
                 <div className="grid grid-cols-[1fr_1fr_1.4fr] gap-3">
